@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import "./selldata.module.css"; // Import custom CSS for styling
-
+import "./home.css"; // Import custom CSS for styling
+import logo from "../../assets/images/logo.png"; // Import logo image
 import { useNavigate } from "react-router-dom";
 
-const SelldataPage = () => {
+const HomePage = () => {
     const navigate = useNavigate();
   const [sensorName, setSensorName] = useState("");
   const [providerID, setProviderID] = useState("");
@@ -81,12 +81,7 @@ const SelldataPage = () => {
     <div className="home-page">
       {/* Navbar */}
       <nav className="navbar">
-        {/* <img src={logo} alt="Logo" className="logo" /> */}
-        <h3 className="logo">
-        <span className="sen">Sen</span>
-        <span className="sha">Sha</span>
-        <span className="mart">Mart</span>
-        </h3>
+        <img src={logo} alt="Logo" className="logo" />
         <div className="navbar-links">
           <ul>
             <li>
@@ -122,7 +117,7 @@ const SelldataPage = () => {
           {editingIndex !== null ? "Edit Sensor" : "Register New IoT Sensors"}
         </h1>
         <p>
-          Based on your profile, we assume you have no prior experience in coding.{" "}
+          Based on your profile, we assume you are familiar with RDF Triples.{" "}
           <a href="#">Click here to change preference.</a>
         </p>
 
@@ -228,4 +223,4 @@ const SelldataPage = () => {
   );
 };
 
-export default SelldataPage;
+export default HomePage;
