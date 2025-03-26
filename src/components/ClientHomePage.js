@@ -18,7 +18,7 @@ function ClientHomePage() {
           <span className="logo-part blue">Mart</span>
         </h1>
         <nav className="nav">
-          <a href="#search-sensors">Search Sensors</a>
+          <a href="search-sensors">Search Sensors</a>
           <a href="#purchase-history">Purchase History</a>
           <a href="#blog">Blog</a>
           <a href="#help">Help</a>

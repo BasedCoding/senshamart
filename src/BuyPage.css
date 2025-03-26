@@ -1,0 +1,144 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .notification {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+  }
+  
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .logo {
+    font-size: 24px;
+  }
+  
+  .logo-sen, .logo-mart {
+    color: #253858;
+    font-weight: bold;
+  }
+  
+  .logo-sha {
+    color: #E17247;
+    font-weight: bold;
+  }
+  
+  nav {
+    display: flex;
+    gap: 20px;
+  }
+  
+  nav a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  
+  .user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .cart {
+    background-color: #253858;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  
+  .user-icon {
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    padding: 5px;
+  }
+  
+  .filter-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+  
+  .filter-inputs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .filter-inputs input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+  }
+  
+  .filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .reset-btn, .filter-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .reset-btn {
+    background-color: #f8f9fa;
+    color: #6c757d;
+  }
+  
+  .filter-btn {
+    background-color: #ffc107;
+    color: white;
+  }
+  
+  .filter-count {
+    margin-top: 10px;
+  }
+  
+  .sensor-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .sensor-table th, .sensor-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .sensor-table thead {
+    background-color: #f8f9fa;
+  }
+  
+  .sensor-name {
+    color: #dc3545;
+    font-weight: 600;
+  }
+  
+  .action-icon {
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  
+  .cart-icon {
+    color: #ffc107;
+  }
+  
+  

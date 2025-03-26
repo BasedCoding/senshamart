@@ -10,7 +10,8 @@ import MarketPage from './components/market/market';
 import SelldataPage from './components/selldata/selldata';
 import SignInPage from './SignInPage';        
 import RegisterPage from './RegisterPage';       
-import PreferencesPage from './PreferencesPage';   
+import PreferencesPage from './PreferencesPage';  
+import BuyPage from './BuyPage'; 
 import './App.css';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/client" element={<ClientHomePage />} />
+              <Route path='search-sensors' element={<BuyPage />} />
           <Route path="/provider" element={<SensorProviderHomePage />} />
               <Route path="blog" element={<BlogPage />} />
               <Route path='help' element={<HelpPage />} />
