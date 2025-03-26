@@ -11,11 +11,10 @@
 /* Header styles */
 .header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 1rem 5%;
-  background-color: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+  padding: 20px 5%;
+  background-color: #ffffff;
 }
 
 .logo {
