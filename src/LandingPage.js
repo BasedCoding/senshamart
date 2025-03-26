@@ -30,7 +30,7 @@ function LandingPage() {
                     World's #1
                 </h1>
                 <h1 className="hero-title orange-text">
-                    Sensor Data Archive
+                    Sensor Data Network
                 </h1>
                 <Link to="/client" className="get-started-button-hero">
                     Get Started

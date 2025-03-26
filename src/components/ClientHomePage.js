@@ -12,11 +12,13 @@ function ClientHomePage() {
   return (
     <div className="app">
       <header className="header">
+      <a href="/client" className="logo-link">
         <h1 className="logo">
           <span className="logo-part blue">Sen</span>
           <span className="logo-part orange">Sha</span>
           <span className="logo-part blue">Mart</span>
         </h1>
+      </a> 
         <nav className="nav">
           <a href="search-sensors">Search Sensors</a>
           <a href="#purchase-history">Purchase History</a>

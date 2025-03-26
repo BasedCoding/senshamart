@@ -17,11 +17,13 @@ function RegisterPage() {
     <div className="register-page">
       {/* Header Section */}
       <header className="header">
-        <h1 className="logo">
-          <span className="logo-part blue">Sen</span>
-          <span className="logo-part orange">Sha</span>
-          <span className="logo-part blue">Mart</span>
-        </h1>
+        <a href="/" className="logo-link">
+          <h1 className="logo">
+            <span className="logo-part blue">Sen</span>
+            <span className="logo-part orange">Sha</span>
+            <span className="logo-part blue">Mart</span>
+          </h1>
+        </a> 
         <nav className="nav">
           <a href="/">Home</a>
           <a href="#about">About Us</a>
@@ -67,9 +69,9 @@ function RegisterPage() {
           <div className="form-group">
             <label>Role*</label>
             <select required>
-              <option value="Buyer">Buyer</option>
-              <option value="Seller">Seller</option>
-              <option value="Data Provider">Data Provider</option>
+              <option value="Buyer">Purchase Sensors</option>
+              <option value="Seller">Sell Sensors</option>
+              <option value="Data Provider">Provide Sensor Data</option>
             </select>
           </div>
           {/* Key Pair Section */}

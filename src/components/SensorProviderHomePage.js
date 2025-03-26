@@ -12,11 +12,13 @@ function SensorProviderPage() {
   return (
     <div className="app">
       <header className="header">
+      <a href="/provider" className="logo-link">
         <h1 className="logo">
           <span className="logo-part blue">Sen</span>
           <span className="logo-part orange">Sha</span>
           <span className="logo-part blue">Mart</span>
         </h1>
+      </a> 
         <nav className="nav">
           <a href="sell-data">Sell Data</a>
           <a href="my-marketplace">My Marketplace</a>

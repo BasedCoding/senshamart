@@ -16,9 +16,14 @@ body {
   .header {
     display: flex;
     justify-content: space-between;
+    text-decoration: none;
     align-items: center;
     padding: 20px 5%; 
     background-color: #ffffff;
+  }
+
+  .header a{
+    text-decoration: none;
   }
   
   .logo {

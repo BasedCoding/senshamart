@@ -7,11 +7,13 @@ function SignInPage() {
     <div className="sign-in-page">
       {/* Header Section (same styling as Landing Page) */}
       <header className="header">
-        <h1 className="logo">
-          <span className="logo-part blue">Sen</span>
-          <span className="logo-part orange">Sha</span>
-          <span className="logo-part blue">Mart</span>
-        </h1>
+        <a href="/" className="logo-link">
+          <h1 className="logo">
+            <span className="logo-part blue">Sen</span>
+            <span className="logo-part orange">Sha</span>
+            <span className="logo-part blue">Mart</span>
+          </h1>
+        </a> 
         <nav className="nav">
           <a href="/">Home</a>
           <a href="#about">About Us</a>

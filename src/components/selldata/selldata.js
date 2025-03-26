@@ -143,12 +143,13 @@ export default function SellDataPage() {
     <div className={styles.app}>
       {/* Header */}
       <header className={styles.header}>
-        <div className="logo">
-          <span className={styles.logoBlue}>Sen</span>
-          <span className={styles.logoOrange}>Sha</span>
-          <span className={styles.logoBlue}>Mart</span>
-        </div>
-
+      <a href="/provider" className="logo-link">
+        <h1 className="logo">
+          <span className="logo-part blue">Sen</span>
+          <span className="logo-part orange">Sha</span>
+          <span className="logo-part blue">Mart</span>
+        </h1>
+      </a> 
         <nav className="nav">
           <a href="sell-data" className={styles.active}>
             Sell Data

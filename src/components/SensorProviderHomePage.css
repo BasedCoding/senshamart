@@ -21,6 +21,10 @@ body {
     background-color: #ffffff;
 }
 
+.header a{
+    text-decoration: none;
+  }
+
 .logo {
     font-family: 'Geologica', sans-serif;
     font-weight: 800;
