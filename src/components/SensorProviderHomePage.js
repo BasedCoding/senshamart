@@ -15,6 +15,14 @@ function SensorProviderPage() {
     navigate("/client"); 
   };
 
+  const handleRegister = () => {
+    navigate("/sell-data"); 
+  };
+
+  const handleMarketplace = () => {
+    navigate("/my-marketplace"); 
+  };
+
 
   return (
     <div className="app">
@@ -80,7 +88,7 @@ function SensorProviderPage() {
             />
             <h4>Register Sensors</h4>
             <p>Add new IoT sensors to your Marketplace</p>
-            <button className="action-btn orange-btn">Register</button>
+            <button onClick={handleRegister} className="action-btn orange-btn">Register</button>
           </div>
 
           <div className="action-card">
@@ -91,7 +99,7 @@ function SensorProviderPage() {
             />
             <h4>My Marketplace</h4>
             <p>View and manage your registered IoT sensors</p>
-            <button className="action-btn blue-btn">View</button>
+            <button onClick={handleMarketplace} className="action-btn blue-btn">View</button>
           </div>
         </div>
       </main>

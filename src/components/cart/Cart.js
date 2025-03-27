@@ -68,18 +68,18 @@ function Cart() {
     <div className={styles.app}>
       {/* Header */}
       <header className={styles.header}>
-      <a href="/client" className="logo-link">
-        <h1 className="logo">
-          <span className="logo-part blue">Sen</span>
-          <span className="logo-part orange">Sha</span>
-          <span className="logo-part blue">Mart</span>
-        </h1>
-      </a> 
+        <a href="/client" className="logo-link">
+            <h1 className="logo">
+            <span className="logo-part blue">Sen</span>
+            <span className="logo-part orange">Sha</span>
+            <span className="logo-part blue">Mart</span>
+            </h1>
+        </a> 
         <nav className="nav">
-          <a href="search-sensors">Search Sensors</a>
-          <a href="purchasehistory">Purchase History</a>
-          <a href="#blog">Blog</a>
-          <a href="#help">Help</a>
+        <a href="search-sensors">Search Sensors</a>
+        <a href="purchasehistory">Purchase History</a>
+        <a href="#blog">Blog</a>
+        <a href="#help">Help</a>
         </nav>
         <div className={styles["cart-profile"]}>
           {/* Cart Section */}

@@ -11,7 +11,7 @@ import SelldataPage from './components/selldata/selldata';
 import SignInPage from './SignInPage';        
 import RegisterPage from './RegisterPage';       
 import PreferencesPage from './PreferencesPage';  
-import BuyPage from './BuyPage'; 
+import BuyPage from './components/buysensors/BuyPage'; 
 import SensorDataPage from './SensorDataPage';
 import Cart from './components/cart/Cart';
 import PurchaseHistory from './components/purchasehistory/purchasehistory';
