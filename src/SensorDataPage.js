@@ -2,12 +2,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
 import "./components/SensorDataPage.css";
+import { useNavigate } from "react-router-dom";
 
 function SensorDataPage() {
   const [activeTab, setActiveTab] = useState("graph");
   const [selectedSensor, setSelectedSensor] = useState("Sensor A");
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+
+  const navigate = useNavigate();
+
+  const Cart = () => {
+    navigate("/cart")
+  }
 
   const sensorData = {
     "Sensor A": {
@@ -37,8 +44,9 @@ function SensorDataPage() {
   useEffect(() => {
     if (activeTab === "graph") {
       if (chartInstance.current) {
-        chartInstance.current.destroy();
+        chartInstance.current.destroy(); 
       }
+  
       const ctx = chartRef.current.getContext("2d");
       chartInstance.current = new Chart(ctx, {
         type: "line",
@@ -56,31 +64,32 @@ function SensorDataPage() {
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true, 
           scales: {
             y: {
               beginAtZero: true,
-              max: 25, // Set a reasonable max value
+              max: 25, 
               ticks: {
-                stepSize: 5, // Set step size for the y axis
+                stepSize: 5, 
               },
             },
           },
           plugins: {
             legend: {
-              display: false, // Remove the legend
+              display: false, 
             },
           },
         },
       });
     }
-
+  
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
       }
     };
   }, [activeTab, selectedSensor]);
+  
 
     const [dropdownVisible, setDropdownVisible] = useState(false);
   
@@ -101,16 +110,16 @@ function SensorDataPage() {
       </a> 
         <nav className="nav">
           <a href="search-sensors">Search Sensors</a>
-          <a href="#purchase-history">Purchase History</a>
+          <a href="purchasehistory">Purchase History</a>
           <a href="#blog">Blog</a>
           <a href="#help">Help</a>
         </nav>
         <div className="cart-profile">
           {/* Cart Section */}
           <div className="cart-container">
-            <div className="cart-icon-container">
+            <div onClick={Cart} className="cart-icon-container">
               <img src="/f7_cart.png" alt="Cart Icon" className="cart-icon" />
-              <span className="cart-count">2</span>
+              <span className="cart-count">3</span>
             </div>
           </div>
 

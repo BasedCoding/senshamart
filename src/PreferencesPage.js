@@ -1,8 +1,12 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./PreferencesPage.css";
 
 function PreferencesPage() {
+  const navigate = useNavigate(); 
+  const handleClientLogin = () => {
+    navigate("/client"); 
+  };
   return (
     <div className="preferences-page">
       {/* Header Section (same as Landing Page) */}
@@ -60,7 +64,7 @@ function PreferencesPage() {
                 Are you familiar with SPARQL Queries?
               </label>
             </div>
-            <button type="submit" className="btn continue-btn">
+            <button onClick={handleClientLogin} type="submit" className="btn continue-btn">
               Continue
             </button>
           </form>

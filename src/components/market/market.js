@@ -1,9 +1,12 @@
 // src/components/MyMarketplacePage.js
 import React, { useState } from 'react';
-import './market.css'; // Create this CSS file
+import './market.css'; 
+import { useNavigate } from "react-router-dom";
 
 function MarketPage() {
     const [dropdownVisible, setDropdownVisible] = useState(false);
+    
+    const navigate = useNavigate(); 
   
     const toggleDropdown = () => {
       setDropdownVisible(!dropdownVisible);
@@ -37,6 +40,11 @@ function MarketPage() {
     setSelectedSensor(sensor);
   };
 
+  const handleClientLogin = () => {
+    navigate("/client"); 
+  };
+
+
   return (
     <div className="app">
       <header className="header">
@@ -61,7 +69,7 @@ function MarketPage() {
             {dropdownVisible && (
               <div className="dropdown-menu">
                 <button>Check Profile</button>
-                <button>Log in as a Client</button>
+                <button onClick={handleClientLogin}>Log in as a Client</button>
               </div>
             )}
           </div>

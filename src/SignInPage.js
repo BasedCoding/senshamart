@@ -1,11 +1,25 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./SignInPage.css";
 
 function SignInPage() {
+  const navigate = useNavigate();
+
+  const handleSignIn = (event) => {
+    event.preventDefault(); 
+
+    const isAuthenticated = true; 
+
+    if (isAuthenticated) {
+      navigate("/client"); 
+    } else {
+      alert("Invalid credentials. Please try again.");
+    }
+  };
+
   return (
     <div className="sign-in-page">
-      {/* Header Section (same styling as Landing Page) */}
+      {/* Header Section */}
       <header className="header">
         <a href="/" className="logo-link">
           <h1 className="logo">
@@ -13,7 +27,7 @@ function SignInPage() {
             <span className="logo-part orange">Sha</span>
             <span className="logo-part blue">Mart</span>
           </h1>
-        </a> 
+        </a>
         <nav className="nav">
           <a href="/">Home</a>
           <a href="#about">About Us</a>
@@ -21,12 +35,12 @@ function SignInPage() {
           <a href="#contact">Contact Us</a>
         </nav>
         <div className="auth-buttons">
-          <Link to="/login" className="login-button">
+          <a href="/login" className="login-button">
             Log In
-          </Link>
-          <Link to="/register" className="get-started-button">
+          </a>
+          <a href="/register" className="get-started-button">
             Get Started
-          </Link>
+          </a>
         </div>
       </header>
 
@@ -35,12 +49,13 @@ function SignInPage() {
         <h1 className="page-title">Sign In to SenShaMart</h1>
         <p className="register-instead">
           or{" "}
-          <Link to="/register" className="orange">
+          <a href="/register" className="orange">
             register instead
-          </Link>
+          </a>
         </p>
 
-        <form className="signin-form">
+        {/* Sign-In Form */}
+        <form className="signin-form" onSubmit={handleSignIn}>
           <div className="form-group">
             <label>Email Address*</label>
             <input type="email" placeholder="example@domain.com" required />
@@ -49,6 +64,7 @@ function SignInPage() {
             <label>Password*</label>
             <input type="password" placeholder="Enter your password" required />
           </div>
+          {/* Sign In Button */}
           <button type="submit" className="btn sign-in-btn">
             Sign In
           </button>
@@ -57,7 +73,7 @@ function SignInPage() {
         <p className="trouble-signin">Having trouble signing in?</p>
       </main>
 
-      {/* Footer Section (same styling as Landing Page) */}
+      {/* Footer Section */}
       <footer className="footer-section">
         <div className="footer-content">
           <div className="footer-logo">

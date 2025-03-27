@@ -13,6 +13,8 @@ import RegisterPage from './RegisterPage';
 import PreferencesPage from './PreferencesPage';  
 import BuyPage from './BuyPage'; 
 import SensorDataPage from './SensorDataPage';
+import Cart from './components/cart/Cart';
+import PurchaseHistory from './components/purchasehistory/purchasehistory';
 import './App.css';
 
 function App() {
@@ -24,6 +26,8 @@ function App() {
           <Route path="/client" element={<ClientHomePage />} />
               <Route path='search-sensors' element={<BuyPage />} />
               <Route path='data' element={<SensorDataPage/>} />
+              <Route path='cart' element={<Cart/>} />
+              <Route path='purchasehistory' element={<PurchaseHistory/>} />
           <Route path="/provider" element={<SensorProviderHomePage />} />
               <Route path="blog" element={<BlogPage />} />
               <Route path='help' element={<HelpPage />} />

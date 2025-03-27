@@ -1,13 +1,23 @@
 // src/components/ClientHomePage.js
 import React, {useState} from 'react';
-import './ClientHomePage.css'; // You can create a separate CSS file for this component
+import { useNavigate } from "react-router-dom";
+import './ClientHomePage.css'; 
 
 function ClientHomePage() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const navigate = useNavigate(); 
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
   };
+
+  const handleProviderLogin = () => {
+    navigate("/provider"); 
+  };
+
+  const Cart = () => {
+    navigate("/cart")
+  }
 
   return (
     <div className="app">
@@ -21,16 +31,16 @@ function ClientHomePage() {
       </a> 
         <nav className="nav">
           <a href="search-sensors">Search Sensors</a>
-          <a href="#purchase-history">Purchase History</a>
+          <a href="purchasehistory">Purchase History</a>
           <a href="#blog">Blog</a>
           <a href="#help">Help</a>
         </nav>
         <div className="cart-profile">
           {/* Cart Section */}
           <div className="cart-container">
-            <div className="cart-icon-container">
+            <div onClick={Cart} className="cart-icon-container">
               <img src="/f7_cart.png" alt="Cart Icon" className="cart-icon" />
-              <span className="cart-count">2</span>
+              <span className="cart-count">3</span>
             </div>
           </div>
 
@@ -44,7 +54,7 @@ function ClientHomePage() {
             {dropdownVisible && (
               <div className="dropdown-menu">
                 <button>Check Profile</button>
-                <button>Log in as a Provider</button>
+                <button onClick={handleProviderLogin}>Log in as a Provider</button>
               </div>
             )}
           </div>
@@ -93,6 +103,32 @@ function ClientHomePage() {
           </div>
         </div>
       </main>
+
+        {/* Footer Section */}
+        <footer className="footer-section">
+          <div className="footer-content">
+              <div className="footer-logo">
+                  <span className="logo-part blue">Sen</span>
+                  <span className="logo-part orange">Sha</span>
+                  <span className="logo-part blue">Mart</span>
+              </div>
+              <div className="footer-links">
+                  <a href="#home">Home</a>
+                  <a href="#about">About Us</a>
+                  <a href="#services">Our Services</a>
+                  <a href="#blog">Blog</a>
+                  <a href="#contact">Contact Us</a>
+                  <a href="#terms">Terms of Service</a>
+              </div>
+              <div className="newsletter-container">
+              <h4 className="newsletter-heading">Sign Up For Our Newsletter!</h4>
+              <div className="newsletter-form">
+                  <input type="text" placeholder="Placeholder Text" />
+                  <button className="signup-button">Sign Up</button>
+              </div>
+          </div>
+          </div>
+      </footer >
     </div>
   );
 }
