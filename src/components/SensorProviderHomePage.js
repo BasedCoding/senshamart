@@ -95,31 +95,6 @@ function SensorProviderPage() {
           </div>
         </div>
       </main>
-      {/* Footer Section */}
-      <footer className="footer-section">
-        <div className="footer-content">
-          <div className="footer-logo">
-            <span className="logo-part blue">Sen</span>
-            <span className="logo-part orange">Sha</span>
-            <span className="logo-part blue">Mart</span>
-          </div>
-          <div className="footer-links">
-            <a href="#home">Home</a>
-            <a href="#about">About Us</a>
-            <a href="#services">Our Services</a>
-            <a href="#blog">Blog</a>
-            <a href="#contact">Contact Us</a>
-            <a href="#terms">Terms of Service</a>
-          </div>
-          <div className="newsletter-container">
-            <h4 className="newsletter-heading">Sign Up For Our Newsletter!</h4>
-            <div className="newsletter-form">
-              <input type="text" placeholder="Placeholder Text" />
-              <button className="signup-button">Sign Up</button>
-            </div>
-          </div>
-        </div>
-      </footer>
         {/* Footer Section */}
         <footer className="footer-section">
           <div className="footer-content">
