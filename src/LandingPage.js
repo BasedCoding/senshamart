@@ -27,10 +27,10 @@ function LandingPage() {
             <section className="hero-section">
                 <div className="hero-text">
                 <h1 className="hero-title">
-                    World's #1
+                    Lorem Ipsum
                 </h1>
                 <h1 className="hero-title orange-text">
-                    Sensor Data Network
+                    Sensor Sharing
                 </h1>
                 <Link to="/client" className="get-started-button-hero">
                     Get Started
@@ -57,7 +57,7 @@ function LandingPage() {
                     <div className="option-card">
                         <img src="/provider-icon.png" alt="Data Provider Icon" className="option-icon" />
                         <div className="option-heading">
-                            As a <Link to="/provider" className="option-link">Data Provider</Link>
+                            As a <Link to="/provider" className="option-link">Sensor Provider</Link>
                         </div>
                         <p>A short explanation on what the data provider’s purpose is Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
                         <Link to="/provider" className="learn-more">Learn More</Link>

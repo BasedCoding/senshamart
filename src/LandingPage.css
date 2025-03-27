@@ -92,7 +92,7 @@ body {
   }
   
   .hero-text {
-    padding-right: 20px;
+    padding-right: 20em;
     text-align: left;
     display: flex;
     flex-direction: column;
@@ -133,6 +133,7 @@ body {
   .hero-image img {
     max-width: 100%;
     height: auto;
+    min-height: auto;
     margin-left: 4em;
   }
   
