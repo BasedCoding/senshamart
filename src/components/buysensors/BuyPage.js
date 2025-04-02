@@ -204,14 +204,14 @@ function BuyPage() {
                       <p><b>Sensor Type:</b> {item.type}</p>
                       <p><b>Location:</b> {item.location}</p>
                       <p><b>Last Updated:</b> {item.date}</p>
-                      <p><b>Subtotal:</b> {item.subtotal.toFixed(2)}$</p>
+                      <p><b>Subtotal:</b> {item.subtotal.toFixed(2)}senshacoins</p>
                       <button onClick={() => removeSensor(item.id)} className={styles["remove-button"]}>⨉</button>
                     </div>
                   ))
                 )}
               </div>
               <div className={styles["modal-footer"]}>
-                <div className={styles["cart-total"]}>Total: {cartTotal.toFixed(2)}$</div>
+                <div className={styles["cart-total"]}>Total: {cartTotal.toFixed(2)}senshacoins</div>
               </div>
             </div>
           </div>
@@ -234,7 +234,7 @@ function BuyPage() {
                 <label>Duty Cycle*</label>
                 <input type="number" value={dutyCycle} onChange={(e) => setDutyCycle(parseInt(e.target.value))} />
               </div>
-              <div className={styles["modal-subtotal"]}><b>Subtotal: {subtotal.toFixed(2)}$</b></div>
+              <div className={styles["modal-subtotal"]}><b>Subtotal: {subtotal.toFixed(2)}senshacoins</b></div>
               <div className={styles["modal-actions"]}>
                 <button className={styles["cancel-button"]} onClick={() => setShowModal(false)}>Cancel</button>
                 <button className={styles["confirm-button"]} onClick={handleConfirmAdd}>Add to Cart</button>
