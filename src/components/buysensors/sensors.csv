@@ -1,0 +1,11 @@
+id,name,type,location,date,price,amount,duration,dutyCycle,invoiceNumber
+1211111,Temperature Alpha,Room Temperature Sensor,Australia,Apr-05-2024,284.35,12482,600,21,423463455
+1212222,Humidity Beta,Humidity Sensor,USA,Apr-06-2024,284.35,12482,600,21,423463455
+1213333,Pressure Gamma,Pressure Sensor,Germany,Apr-07-2024,284.35,12482,600,21,423463455
+1214444,Light Delta,Light Sensor,Japan,Apr-08-2024,284.35,12482,600,21,423463455
+1215555,Motion Epsilon,Motion Sensor,Canada,Apr-09-2024,284.35,12482,600,21,423463455
+1216666,CO2 Zeta,Gas Sensor,UK,Apr-10-2024,284.35,12482,600,21,423463455
+1217777,Temperature Eta,Room Temperature Sensor,Singapore,Apr-11-2024,284.35,12482,600,21,423463455
+1218888,Humidity Theta,Humidity Sensor,India,Apr-12-2024,284.35,12482,600,21,423463455
+1219999,Pressure Iota,Pressure Sensor,Brazil,Apr-13-2024,284.35,12482,600,21,423463455
+1220000,Light Kappa,Light Sensor,South Africa,Apr-14-2024,284.35,12482,600,21,423463455

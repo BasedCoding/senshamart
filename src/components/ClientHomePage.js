@@ -1,11 +1,22 @@
 // src/components/ClientHomePage.js
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { useNavigate } from "react-router-dom";
 import './ClientHomePage.css'; 
 
 function ClientHomePage() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const storedCartItems = localStorage.getItem('cartItems');
+    if (storedCartItems) {
+      const cartItems = JSON.parse(storedCartItems);
+      setCartCount(cartItems.length);
+    } else {
+      setCartCount(0);
+    }
+  }, []);
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
@@ -40,7 +51,7 @@ function ClientHomePage() {
           <div className="cart-container">
             <div onClick={Cart} className="cart-icon-container">
               <img src="/f7_cart.png" alt="Cart Icon" className="cart-icon" />
-              <span className="cart-count">3</span>
+              <span className="cart-count">{cartCount}</span>
             </div>
           </div>
 
