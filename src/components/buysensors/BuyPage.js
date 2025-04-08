@@ -1,6 +1,6 @@
 // IoT Sensor Marketplace - Styled without Bootstrap
 import React, { useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styles from './BuyPage.module.css';
 
 const sensors = [

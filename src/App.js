@@ -12,7 +12,7 @@ import SignInPage from './SignInPage';
 import RegisterPage from './RegisterPage';       
 import PreferencesPage from './PreferencesPage';  
 import BuyPage from './components/buysensors/BuyPage'; 
-import SensorDataPage from './SensorDataPage';
+import SensorDataPage from './components/data/SensorDataPage';
 import Cart from './components/cart/Cart';
 import PurchaseHistory from './components/purchasehistory/purchasehistory';
 import './App.css';

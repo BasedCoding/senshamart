@@ -146,7 +146,7 @@ function PurchaseHistory() {
                 </p>
               </div>
               <div className={styles.itemInvoice}>
-                <p className={styles.itemPrice}>senshacoins{item.price}</p>
+                <p className={styles.itemPrice}>{item.price} senshacoins</p>
                 <p className={styles.invoiceContainer}>
                   Invoice Number: <span className={styles.invoiceNumber}>{item.invoiceNumber}</span>
                 </p>

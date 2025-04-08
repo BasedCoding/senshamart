@@ -1,7 +1,7 @@
 // src/components/SensorDataPage.js
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
-import "./components/SensorDataPage.css";
+import "./SensorDataPage.css";
 import { useNavigate } from "react-router-dom";
 
 function SensorDataPage() {
