@@ -5,18 +5,39 @@ import { Link, useNavigate } from "react-router-dom";
 function PurchaseHistory() {
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [purchaseHistory, setPurchaseHistory] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [sortOrder, setSortOrder] = useState("latest"); // "latest" or "oldest"
+    const ITEMS_PER_PAGE = 5;
     const navigate = useNavigate();
-    const [cart] = useState(() => {
+    const [cart, setCart] = useState(() => {
         const storedCartItems = localStorage.getItem('cartItems');
         return storedCartItems ? JSON.parse(storedCartItems) : [];
     });
 
     useEffect(() => {
+        loadPurchaseHistory();
+    }, []);
+
+    useEffect(() => {
+        // Recalculate and set the current page after deletion
+        if (purchaseHistory.length > 0) {
+            const totalPages = Math.ceil(purchaseHistory.length / ITEMS_PER_PAGE);
+            if (currentPage > totalPages) {
+                setCurrentPage(totalPages > 0 ? totalPages : 1);
+            }
+        } else {
+            setCurrentPage(1); 
+        }
+    }, [purchaseHistory, currentPage]);
+
+    const loadPurchaseHistory = () => {
         const storedPurchaseHistory = localStorage.getItem("purchaseHistory");
         if (storedPurchaseHistory) {
             setPurchaseHistory(JSON.parse(storedPurchaseHistory));
+        } else {
+            setPurchaseHistory([]); 
         }
-    }, []);
+    };
 
     const toggleDropdown = () => {
         setDropdownVisible(!dropdownVisible);
@@ -30,6 +51,38 @@ function PurchaseHistory() {
         navigate("/cart");
     };
 
+    // Remove a purchase history item
+    const removePurchase = (invoiceNumber) => {
+        const updatedHistory = purchaseHistory.filter(
+            (item) => item.invoiceNumber !== invoiceNumber
+        );
+        localStorage.setItem("purchaseHistory", JSON.stringify(updatedHistory));
+        loadPurchaseHistory();
+    };
+
+    // Sort purchase history by time
+    const sortPurchaseHistory = () => {
+        const sortedHistory = [...purchaseHistory].sort((a, b) => {
+            const dateA = new Date(a.purchaseDate).getTime();
+            const dateB = new Date(b.purchaseDate).getTime();
+
+            return sortOrder === "latest" ? dateB - dateA : dateA - dateB;
+        });
+        setPurchaseHistory(sortedHistory);
+        setSortOrder(sortOrder === "latest" ? "oldest" : "latest");
+    };
+
+    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+    const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+    const currentItems = purchaseHistory.slice(indexOfFirstItem, indexOfLastItem);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    const pageNumbers = [];
+    for (let i = 1; i <= Math.ceil(purchaseHistory.length / ITEMS_PER_PAGE); i++) {
+        pageNumbers.push(i);
+    }
+
     return (
         <div className={styles.app}>
             <header className={styles.header}>
@@ -40,7 +93,7 @@ function PurchaseHistory() {
                         <span className="logo-part blue">Mart</span>
                     </h1>
                 </a>
-                <nav className="nav">
+                <nav className={styles.nav}>
                     <a href="search-sensors">Search Sensors</a>
                     <a href="purchasehistory">Purchase History</a>
                     <a href="#blog">Blog</a>
@@ -69,46 +122,85 @@ function PurchaseHistory() {
 
             <main className={styles.purchaseHistoryPage}>
                 <h2 className={styles.pageTitle}>Purchase History</h2>
-                {purchaseHistory.length === 0 ? (
+
+                {/* Sorting and Pagination Controls */}
+                <div className={styles.controls}>
+                    <button onClick={sortPurchaseHistory} className={styles.sortButton}>
+                        Sort by: {sortOrder === "latest" ? "Latest" : "Oldest"}
+                    </button>
+                </div>
+
+                {currentItems.length === 0 ? (
                     <p>No purchases found.</p>
                 ) : (
-                    <div className={styles.purchaseList}>
-                        {purchaseHistory.map((item) => (
-                            <div key={item.invoiceNumber} className={styles.purchaseItem}>
-                                <div className={styles.itemDetails}>
-                                    <p className={styles.itemName}>{item.name}</p>
-                                    <p>{item.serial}</p>
-                                    <p>{item.type}</p>
-                                    <p>{item.location}</p>
+                    <>
+                        {/* Purchase List */}
+                        <div className={styles.purchaseList}>
+                            {currentItems.map((item) => (
+                                <div key={item.invoiceNumber} className={styles.purchaseItem}>
+                                    <div className={styles.itemDetails}>
+                                        <p className={styles.itemName}>{item.name}</p>
+                                        <p>{item.serial}</p>
+                                        <p>{item.type}</p>
+                                        <p>{item.location}</p>
+                                    </div>
+
+                                    <div className={styles.itemInfo}>
+                                        <p>
+                                            Amount:{" "}
+                                            <span className={styles.itemValue}>{item.amount}</span>
+                                        </p>
+                                        <p>
+                                            Duration (Minutes):{" "}
+                                            <span className={styles.itemValue}>{item.duration}</span>
+                                        </p>
+                                        <p>
+                                            Duty Cycle:{" "}
+                                            <span className={styles.itemValue}>{item.dutyCycle}</span>
+                                        </p>
+                                        <p>
+                                            Purchase Date:{" "}
+                                            <span className={styles.itemValue}>{item.purchaseDate}</span>
+                                        </p>
+                                    </div>
+
+                                    <div className={styles.itemInvoice}>
+                                        <p className={styles.itemPrice}>{item.subtotal} senshacoins</p>
+                                        <p className={styles.invoiceContainer}>
+                                            Invoice Number: <span className={styles.invoiceNumber}>{item.invoiceNumber}</span>
+                                        </p>
+                                        <button
+                                            onClick={() => removePurchase(item.invoiceNumber)}
+                                            className={styles.removeButton}
+                                        >
+                                            Remove
+                                        </button>
+                                        <Link to="/data" className={styles.viewDataLink}>
+                                            View Data
+                                        </Link>
+                                    </div>
                                 </div>
-                                <div className={styles.itemInfo}>
-                                    <p>
-                                        Amount: <span className={styles.itemValue}>{item.amount}</span>
-                                    </p>
-                                    <p>
-                                        Duration (Minutes):{" "}
-                                        <span className={styles.itemValue}>{item.duration}</span>
-                                    </p>
-                                    <p>
-                                        Duty Cycle: <span className={styles.itemValue}>{item.dutyCycle}</span>
-                                    </p>
-                                    <p>
-                                        Purchase Date:{" "}
-                                        <span className={styles.itemValue}>{item.purchaseDate}</span>
-                                    </p>
-                                </div>
-                                <div className={styles.itemInvoice}>
-                                    <p className={styles.itemPrice}>{item.subtotal} senshacoins</p>
-                                    <p className={styles.invoiceContainer}>
-                                        Invoice Number: <span className={styles.invoiceNumber}>{item.invoiceNumber}</span>
-                                    </p>
-                                    <Link to="/data" className={styles.viewDataLink}>
-                                        View Data
-                                    </Link>
-                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination */}
+                        {purchaseHistory.length > ITEMS_PER_PAGE && (
+                            <div className={styles.pagination}>
+                                {Array.from(
+                                    { length: Math.ceil(purchaseHistory.length / ITEMS_PER_PAGE) },
+                                    (_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => paginate(i + 1)}
+                                            className={`${styles.pageButton} ${currentPage === i + 1 ? styles.activePage : ""}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    )
+                                )}
                             </div>
-                        ))}
-                    </div>
+                        )}
+                    </>
                 )}
             </main>
         </div>

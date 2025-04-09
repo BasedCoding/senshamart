@@ -282,3 +282,55 @@
     color: #f06e4b; 
     text-decoration: none;
   }
+
+  /* New Styles for Controls, Remove Button, and Pagination */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  width: 80%;
+  max-width: 1200px;
+  margin-bottom: 20px;
+}
+
+.sortButton,
+.removeButton,
+.pageButton {
+  background-color: #3c5a82;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+}
+
+.sortButton:hover,
+.removeButton:hover,
+.pageButton:hover {
+  background-color: #f06e4b;
+}
+
+.removeButton {
+  background-color: #f06e4b;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  width: 80%;
+  max-width: 1200px;
+  margin-top: 20px;
+}
+
+.pageButton {
+  margin: 0 5px;
+  padding: 8px 12px;
+  border-radius: 50%;
+}
+
+.activePage {
+  background-color: #f06e4b;
+  color: white;
+}
