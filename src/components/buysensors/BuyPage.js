@@ -1,8 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styles from "./BuyPage.module.css";
-import Papa from "papaparse";
-import sensorsCSV from "./sensors.csv";
 
 function BuyPage() {
   const [sensors, setSensors] = useState([]);
@@ -27,10 +25,13 @@ function BuyPage() {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [subtotal, setSubtotal] = useState(0);
   const [isFilterSectionOpen, setIsFilterSectionOpen] = useState(true);
+  const [walletKeypair] = useState(
+    "MHQCAQEEIKaHMfh7znw+YmIVPePU2f80mUpi6BKiUYNaAaTN02zJoAcGBSuBBAAKoUQDQgAEWHLcJyFezAjJkaM7Gy/khGCZUcBA0MViZUd3JEA7kFilrWWSPhT7rhfd5qKHAp+3WrEWQXjo0ewJFxIzCHe2fA=="
+  );
 
   useEffect(() => {
     fetchSensors();
-  }, []);
+  }, [walletKeypair]);
 
   useEffect(() => {
     localStorage.setItem("cartItems", JSON.stringify(cart));
@@ -45,34 +46,91 @@ function BuyPage() {
   }, [amount, duration, dutyCycle, selectedSensor]);
 
   const fetchSensors = async () => {
-    Papa.parse(sensorsCSV, {
-      header: true,
-      download: true,
-      complete: (results) => {
-        // Convert numeric fields to numbers
-        const parsedData = results.data.map((sensor) => ({
-          ...sensor,
-          id: sensor.id ? parseInt(sensor.id, 10) : 0, 
-          price: sensor.price ? parseFloat(sensor.price) : 0.0, 
-          amount: sensor.amount ? parseInt(sensor.amount, 10) : 0,
-          duration: sensor.duration ? parseInt(sensor.duration, 10) : 0, 
-          dutyCycle: sensor.dutyCycle ? parseInt(sensor.dutyCycle, 10) : 0, 
-          costPerMinute: sensor.costPerMinute
-            ? parseInt(sensor.costPerMinute, 10)
-            : 0,
-          costPerKByte: sensor.costPerKByte
-            ? parseInt(sensor.costPerKByte, 10)
-            : 0,
-        }));
-        setSensors(parsedData);
-        setFilteredSensors(parsedData);
-      },
-      error: (error) => {
-        console.error("Error parsing CSV:", error.message);
+    try {
+      const response = await fetch("http://136.186.108.87:7001/sparql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: `
+            PREFIX ssm: <ssm://>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX sosa: <http://www.w3.org/ns/sosa/>
+            PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+            SELECT ?sensor_name ?sensor_hash ?broker_name ?broker_hash ?broker_endpoint ?lat ?long ?measures ?sensor_cpm ?sensor_cpkb WHERE { 
+              ?sensor_tx ssm:Defines ?sensor_name.
+              ?sensor_tx rdf:type "ssm://SensorRegistration".
+              ?sensor_tx ssm:HasHash ?sensor_hash.
+              ?sensor_tx ssm:UsesBroker ?broker_name.
+              ?sensor_tx ssm:CostsPerMinute ?sensor_cpm.
+              ?sensor_tx ssm:CostsPerKB ?sensor_cpkb.
+              FILTER NOT EXISTS { ?x ssm:Supercedes ?sensor_tx }.
+              
+              ?broker_tx ssm:Defines ?broker_name.
+              ?broker_tx rdf:type "ssm://BrokerRegistration".
+              ?broker_tx ssm:HasHash ?broker_hash.
+              ?broker_tx ssm:HasEndpoint ?broker_endpoint.
+              FILTER NOT EXISTS { ?x ssm:Supercedes ?broker_tx }.
+              
+              ?sensor_tx sosa:observes ?observes.
+              ?sensor_tx sosa:hasFeatureOfInterest ?location.
+              ?observes rdfs:label ?measures.
+              ?location geo:lat ?lat.
+              ?location geo:long ?long.
+            }`,
+          walletKeypair: walletKeypair,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to fetch sensors:", response.statusText);
         setNotification("Failed to load sensors.");
         setTimeout(() => setNotification(""), 5000);
-      },
-    });
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.result === false) {
+        console.error("API Error:", data.reason);
+        setNotification(`API Error: ${data.reason}`);
+        setTimeout(() => setNotification(""), 5000);
+        return;
+      }
+
+      // Check if 'data.results' exists and is an array
+      if (!data.headers || !Array.isArray(data.headers)) {
+        console.error("Invalid API response:", data);
+        setNotification(
+          "Failed to load sensors due to invalid API response format."
+        );
+        setTimeout(() => setNotification(""), 5000);
+        return;
+      }
+
+      // Process 'data.values' array instead of 'data.results.bindings'
+      const parsedData = data.values.map((item) => ({
+        sensor_name: item[0],
+        sensor_hash: item[1],
+        broker_name: item[2],
+        broker_hash: item[3],
+        broker_endpoint: item[4],
+        lat: parseFloat(item[5]),
+        long: parseFloat(item[6]),
+        measures: item[7],
+        sensor_cpm: parseFloat(item[8]),
+        sensor_cpkb: parseFloat(item[9]),
+        id: item[1], // Using sensor_hash as ID
+      }));
+
+      setSensors(parsedData);
+      setFilteredSensors(parsedData);
+    } catch (error) {
+      console.error("Error fetching sensors:", error);
+      setNotification("Error loading sensors.");
+      setTimeout(() => setNotification(""), 5000);
+    }
   };
 
   const handleFilterChange = (field, value) => {
@@ -83,11 +141,11 @@ function BuyPage() {
     const filtered = sensors.filter(
       (sensor) =>
         (filter.name === "" ||
-          sensor.name.toLowerCase().includes(filter.name.toLowerCase())) &&
+          sensor.sensor_name.toLowerCase().includes(filter.name.toLowerCase())) &&
         (filter.type === "" ||
-          sensor.type.toLowerCase().includes(filter.type.toLowerCase())) &&
+          sensor.measures.toLowerCase().includes(filter.type.toLowerCase())) &&
         (filter.location === "" ||
-          sensor.location.toLowerCase().includes(filter.location.toLowerCase()))
+          sensor.broker_name.toLowerCase().includes(filter.location.toLowerCase()))
     );
     setFilteredSensors(filtered);
   };
@@ -116,7 +174,7 @@ function BuyPage() {
       subtotal: subtotal,
     };
     setCart([...cart, cartItem]);
-    setNotification(`${selectedSensor.name} added to cart!`);
+    setNotification(`${selectedSensor.sensor_name} added to cart!`);
     setTimeout(() => setNotification(""), 3000);
     setShowModal(false);
   };
@@ -132,7 +190,7 @@ function BuyPage() {
   const handleProviderLogin = () => {
     navigate("/provider");
   };
-
+  
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
   };
@@ -196,172 +254,193 @@ function BuyPage() {
         </div>
       </header>
       <main className={styles.container}>
-        <div className={styles["filter-section"]}>
-          <div className={styles["filter-header"]}>
-            <h2>Select IoT Sensors</h2>
+
+        <div>
+          <div className={styles["filter-section"]}>
+            <div className={styles["filter-header"]}>
+              <h2>Select IoT Sensors</h2>
+            </div>
+            {isFilterSectionOpen && (
+              <>
+                <div className={styles["filter-row"]}>
+                  <input
+                    type="text"
+                    className={styles["filter-input"]}
+                    placeholder="Sensor Name"
+                    value={filter.name}
+                    onChange={(e) => handleFilterChange("name", e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className={styles["filter-input"]}
+                    placeholder="Sensor Type"
+                    value={filter.type}
+                    onChange={(e) => handleFilterChange("type", e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    className={styles["filter-input"]}
+                    placeholder="Location"
+                    value={filter.location}
+                    onChange={(e) => handleFilterChange("location", e.target.value)}
+                  />
+                </div>
+                <div className={styles["filter-actions"]}>
+                  <button className={styles["reset-button"]} onClick={handleReset}>
+                    Reset
+                  </button>
+                  <button
+                    className={styles["apply-button"]}
+                    onClick={handleApplyFilter}
+                  >
+                    Filter
+                  </button>
+                </div>
+                <div className={styles["filter-count"]}>
+                  {countAppliedFilters()} filters applied.
+                </div>
+              </>
+            )}
           </div>
-          {isFilterSectionOpen && (
-            <>
-              <div className={styles["filter-row"]}>
-                <input
-                  type="text"
-                  className={styles["filter-input"]}
-                  placeholder="Sensor Name"
-                  value={filter.name}
-                  onChange={(e) => handleFilterChange("name", e.target.value)}
-                />
-                <input
-                  type="text"
-                  className={styles["filter-input"]}
-                  placeholder="Sensor Type"
-                  value={filter.type}
-                  onChange={(e) => handleFilterChange("type", e.target.value)}
-                />
-                <input
-                  type="text"
-                  className={styles["filter-input"]}
-                  placeholder="Location"
-                  value={filter.location}
-                  onChange={(e) => handleFilterChange("location", e.target.value)}
-                />
-              </div>
-              <div className={styles["filter-actions"]}>
-                <button className={styles["reset-button"]} onClick={handleReset}>
-                  Reset
-                </button>
+          <table className={styles["sensor-table"]}>
+            <thead>
+              <tr>
+                <th>Sensor Name</th>
+                <th>Sensor Hash</th>
+                <th>Broker Name</th>
+                <th>Broker Hash</th>
+                <th>Broker Endpoint</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Measures</th>
+                <th>Sensor CPM</th>
+                <th>Sensor Cpkb</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSensors.map((sensor, index) => (
+                <tr key={index}>
+                  <td>{sensor.sensor_name}</td>
+                  <td>{sensor.sensor_hash}</td>
+                  <td>{sensor.broker_name}</td>
+                  <td>{sensor.broker_hash}</td>
+                  <td>{sensor.broker_endpoint}</td>
+                  <td>{sensor.lat}</td>
+                  <td>{sensor.long}</td>
+                  <td>{sensor.measures}</td>
+                  <td>{sensor.sensor_cpm}</td>
+                  <td>{sensor.sensor_cpkb}</td>
+                  <td>
+                    {isSensorInCart(sensor.id) ? (
+                      <button className={styles["added-to-cart-button"]} disabled>
+                        Added to Cart
+                      </button>
+                    ) : (
+                      <button
+                        className={styles["add-to-cart-button"]}
+                        onClick={() => openModal(sensor)}
+                      >
+                        Add to Cart
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {showModal && selectedSensor && (
+            <div className={styles["modal-overlay"]}>
+              <div className={styles["modal-content"]}>
                 <button
-                  className={styles["apply-button"]}
-                  onClick={handleApplyFilter}
+                  className={styles["close-button"]}
+                  onClick={() => setShowModal(false)}
                 >
-                  Filter
+                  &times;
                 </button>
+                <h5 className={styles["modal-title"]}>Add to Cart</h5>
+                <div className={styles["modal-row"]}>
+                  <label>Sensor Name:</label>
+                  <span>{selectedSensor.sensor_name}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Sensor Hash:</label>
+                  <span>{selectedSensor.sensor_hash}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Broker Name:</label>
+                  <span>{selectedSensor.broker_name}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Broker Endpoint:</label>
+                  <span>{selectedSensor.broker_endpoint}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Latitude:</label>
+                  <span>{selectedSensor.lat}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Longitude:</label>
+                  <span>{selectedSensor.long}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Measures:</label>
+                  <span>{selectedSensor.measures}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Cost Per Minute:</label>
+                  <span>{selectedSensor.sensor_cpm}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Cost Per KByte:</label>
+                  <span>{selectedSensor.sensor_cpkb}</span>
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Amount*</label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(parseInt(e.target.value))}
+                  />
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Duration (Minutes)*</label>
+                  <input
+                    type="number"
+                    value={duration}
+                    onChange={(e) => setDuration(parseInt(e.target.value))}
+                  />
+                </div>
+                <div className={styles["modal-row"]}>
+                  <label>Duty Cycle*</label>
+                  <input
+                    type="number"
+                    value={dutyCycle}
+                    onChange={(e) => setDutyCycle(parseInt(e.target.value))}
+                  />
+                </div>
+                <div className={styles["modal-subtotal"]}>
+                  <b>Subtotal: {subtotal.toFixed(2)}</b>
+                </div>
+                <div className={styles["modal-actions"]}>
+                  <button
+                    className={styles["cancel-button"]}
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={styles["confirm-button"]}
+                    onClick={handleConfirmAdd}
+                  >
+                    Add to Cart
+                  </button>
+                </div>
               </div>
-              <div className={styles["filter-count"]}>
-                {countAppliedFilters()} filters applied.
-              </div>
-            </>
+            </div>
           )}
         </div>
 
-        <table className={styles["sensor-table"]}>
-          <thead>
-            <tr>
-              <th>Sensor Name</th>
-              <th>Sensor ID</th>
-              <th>Sensor Type</th>
-              <th>Location</th>
-              <th>Last Update</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSensors.map((sensor, index) => (
-              <tr key={index}>
-                <td className={styles["sensor-name"]}>{sensor.name}</td>
-                <td>{sensor.id}</td>
-                <td>{sensor.type}</td>
-                <td>{sensor.location}</td>
-                <td>{sensor.date}</td>
-                <td>
-                  {isSensorInCart(sensor.id) ? (
-                    <button className={styles["added-to-cart-button"]} disabled>
-                      Added to Cart
-                    </button>
-                  ) : (
-                    <button
-                      className={styles["add-to-cart-button"]}
-                      onClick={() => openModal(sensor)}
-                    >
-                      Add to Cart
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {showModal && selectedSensor && (
-          <div className={styles["modal-overlay"]}>
-            <div className={styles["modal-content"]}>
-              <button
-                className={styles["close-button"]}
-                onClick={() => setShowModal(false)}
-              >
-                &times;
-              </button>
-              <h5 className={styles["modal-title"]}>Add to Cart</h5>
-              <div className={styles["modal-row"]}>
-                <label>Sensor Name:</label>
-                <span>{selectedSensor.name}</span>
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Sensor ID:</label>
-                <span>{selectedSensor.id}</span>
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Sensor Type:</label>
-                <span>{selectedSensor.type}</span>
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Location:</label>
-                <span>{selectedSensor.location}</span>
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Last Updated:</label>
-                <span>{selectedSensor.date}</span>
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Cost Per Minute:</label>
-                <span>{selectedSensor.costPerMinute} Sensha Coin</span>
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Cost Per KByte:</label>
-                <span>{selectedSensor.costPerKByte} USD</span>
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Amount*</label>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(parseInt(e.target.value))}
-                />
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Duration (Minutes)*</label>
-                <input
-                  type="number"
-                  value={duration}
-                  onChange={(e) => setDuration(parseInt(e.target.value))}
-                />
-              </div>
-              <div className={styles["modal-row"]}>
-                <label>Duty Cycle*</label>
-                <input
-                  type="number"
-                  value={dutyCycle}
-                  onChange={(e) => setDutyCycle(parseInt(e.target.value))}
-                />
-              </div>
-              <div className={styles["modal-subtotal"]}>
-                <b>Subtotal: {subtotal.toFixed(2)}senshacoins</b>
-              </div>
-              <div className={styles["modal-actions"]}>
-                <button
-                  className={styles["cancel-button"]}
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className={styles["confirm-button"]}
-                  onClick={handleConfirmAdd}
-                >
-                  Add to Cart
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
