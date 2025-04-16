@@ -6,7 +6,7 @@ function PurchaseHistory() {
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [purchaseHistory, setPurchaseHistory] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [sortOrder, setSortOrder] = useState("latest"); // "latest" or "oldest"
+    const [sortOrder, setSortOrder] = useState("latest");
     const ITEMS_PER_PAGE = 5;
     const navigate = useNavigate();
     const [cart, setCart] = useState(() => {
@@ -19,7 +19,6 @@ function PurchaseHistory() {
     }, []);
 
     useEffect(() => {
-        // Recalculate and set the current page after deletion
         if (purchaseHistory.length > 0) {
             const totalPages = Math.ceil(purchaseHistory.length / ITEMS_PER_PAGE);
             if (currentPage > totalPages) {
@@ -139,7 +138,7 @@ function PurchaseHistory() {
                             {currentItems.map((item) => (
                                 <div key={item.invoiceNumber} className={styles.purchaseItem}>
                                     <div className={styles.itemDetails}>
-                                        <p className={styles.itemName}>{item.name}</p>
+                                        <p className={styles.itemName}>{item.sensor_name}</p>
                                         <p>{item.serial}</p>
                                         <p>{item.type}</p>
                                         <p>{item.location}</p>

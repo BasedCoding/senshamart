@@ -27,7 +27,7 @@ function LandingPage() {
             <section className="hero-section">
                 <div className="hero-text">
                 <h1 className="hero-title">
-                    Lorem Ipsum
+                    World's
                 </h1>
                 <h1 className="hero-title orange-text">
                     Sensor Sharing
