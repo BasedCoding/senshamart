@@ -16,7 +16,7 @@ function LandingPage() {
                     <a href="/">Home</a>
                     <a href="#about">About Us</a>
                     <a href="#blog">Blog</a>
-                    <a href="#contact">Contact Us</a>
+                    <a href="help">Contact Us</a>
                 </nav>
                 <div className="auth-buttons">
                     <Link to="/login" className="login-button">Log In</Link>

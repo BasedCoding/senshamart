@@ -27,7 +27,7 @@ function App() {
               <Route path='search-sensors' element={<BuyPage />} />
               <Route path='data' element={<SensorDataPage/>} />
               <Route path='cart' element={<Cart/>} />
-              <Route path='purchasehistory' element={<PurchaseHistory/>} />
+              <Route path='purchasehistory' element={<PurchaseHistory/>} />          
           <Route path="/provider" element={<SensorProviderHomePage />} />
               <Route path="blog" element={<BlogPage />} />
               <Route path='help' element={<HelpPage />} />

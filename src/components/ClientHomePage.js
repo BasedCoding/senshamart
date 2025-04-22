@@ -44,7 +44,7 @@ function ClientHomePage() {
           <a href="search-sensors">Search Sensors</a>
           <a href="purchasehistory">Purchase History</a>
           <a href="#blog">Blog</a>
-          <a href="#help">Help</a>
+          <a href="help">Help</a>
         </nav>
         <div className="cart-profile">
           {/* Cart Section */}

@@ -160,7 +160,7 @@ function Cart() {
                     <a href="/search-sensors">Search Sensors</a>
                     <a href="/purchasehistory">Purchase History</a>
                     <a href="#blog">Blog</a>
-                    <a href="#help">Help</a>
+                    <a href="help">Help</a>
                 </nav>
                 <div className={styles["cart-profile"]}>
                     <div className={styles["cart-container"]}>
@@ -189,7 +189,7 @@ function Cart() {
                 {cartItems.length === 0 ? (
                     <div className={styles["empty-cart"]}>
                         <p>Your cart is currently empty.</p>
-                        <Link to="/buy" className={styles["browse-sensors-link"]}>
+                        <Link to="/search-sensors" className={styles["browse-sensors-link"]}>
                             Browse Sensors
                         </Link>
                     </div>

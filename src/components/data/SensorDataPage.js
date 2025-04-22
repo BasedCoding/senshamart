@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
+import mqtt from "mqtt"; 
 import "./SensorDataPage.css";
 import { useNavigate } from "react-router-dom";
 
 function SensorDataPage() {
+    const [cartCount, setCartCount] = useState(0);
     const [activeTab, setActiveTab] = useState("graph");
     const [purchasedSensors, setPurchasedSensors] = useState([]);
     const [selectedSensorIndex, setSelectedSensorIndex] = useState(null);
@@ -11,6 +13,13 @@ function SensorDataPage() {
     const chartInstance = useRef(null);
     const navigate = useNavigate();
     const [dropdownVisible, setDropdownVisible] = useState(false);
+
+    // MQTT state
+    const [liveData, setLiveData] = useState(null);
+
+    // MQTT connection details
+    const broker = "mqtt://136.186.108.94:5003"; 
+    const topic = "out/BMnQDb6nveqKDBRW3Lb76NuwFF3DMs9dmOCzxa1pwUw=/0";
 
     useEffect(() => {
         loadPurchaseHistory();
@@ -28,6 +37,35 @@ function SensorDataPage() {
         }
     };
 
+    // --- MQTT SUBSCRIPTION ---
+    useEffect(() => {
+        // Connect to MQTT broker
+        const client = mqtt.connect(broker);
+
+        client.on("connect", () => {
+            client.subscribe(topic, (err) => {
+                if (!err) {
+                    // Successfully subscribed
+                }
+            });
+        });
+
+        client.on("message", (t, message) => {
+            // Parse and store the latest message
+            try {
+                const parsed = JSON.parse(message.toString());
+                setLiveData(parsed);
+            } catch {
+                setLiveData({ raw: message.toString() });
+            }
+        });
+
+        return () => {
+            client.end();
+        };
+    }, []); // Only run once on mount
+
+    // --- CHART UPDATE ---
     useEffect(() => {
         if (activeTab === "graph" && selectedSensorIndex !== null) {
             if (chartInstance.current) {
@@ -42,8 +80,8 @@ function SensorDataPage() {
                     datasets: [
                         {
                             label: "Temperature (°C)",
-                            // Use a default value to prevent errors if graphData is undefined
-                            data: [0, 0, 0, 0], // Use a default value to prevent errors if graphData is undefined
+                            // Use live data if available, else default
+                            data: liveData && liveData.Value ? [Number(liveData.Value)] : [5, 11, 20, 8],
                             borderColor: "#f06e4b",
                             borderWidth: 2,
                             fill: false,
@@ -76,7 +114,17 @@ function SensorDataPage() {
                 chartInstance.current.destroy();
             }
         };
-    }, [activeTab, selectedSensorIndex, purchasedSensors]);
+    }, [activeTab, selectedSensorIndex, purchasedSensors, liveData]);
+
+    useEffect(() => {
+    const storedCartItems = localStorage.getItem('cartItems');
+    if (storedCartItems) {
+        const cartItems = JSON.parse(storedCartItems);
+        setCartCount(cartItems.length);
+    } else {
+        setCartCount(0);
+    }
+    }, []);
 
     const Cart = () => {
         navigate("/cart")
@@ -90,7 +138,7 @@ function SensorDataPage() {
         navigate("/provider");
     };
 
-    const selectedSensor = purchasedSensors[selectedSensorIndex]; // Get selected sensor object
+    const selectedSensor = purchasedSensors[selectedSensorIndex];
 
     // Incrementing topic for each sensor
     const getTopicForSensor = (index) => {
@@ -108,16 +156,16 @@ function SensorDataPage() {
                     </h1>
                 </a>
                 <nav className="nav">
-                    <a href="/buy">Search Sensors</a>
+                    <a href="/search-sensors">Search Sensors</a>
                     <a href="/purchasehistory">Purchase History</a>
                     <a href="#blog">Blog</a>
-                    <a href="#help">Help</a>
+                    <a href="help">Help</a>
                 </nav>
                 <div className="cart-profile">
                     <div className="cart-container">
                         <div onClick={Cart} className="cart-icon-container">
                             <img src="/f7_cart.png" alt="Cart Icon" className="cart-icon" />
-                            <span className="cart-count">3</span>
+                            <span className="cart-count">{cartCount}</span>
                         </div>
                     </div>
 
@@ -220,7 +268,11 @@ function SensorDataPage() {
                     {activeTab === "graph" && (
                         <div id="graph-section">
                             <h2>Temperature Data</h2>
-                            <p>21°C (Last 12 Hours)</p>
+                            <p>
+                                {liveData && liveData.Value
+                                    ? `${liveData.Value}°C (Live)`
+                                    : "No live data yet"}
+                            </p>
                             <canvas ref={chartRef} className="sensor-chart"></canvas>
                         </div>
                     )}
@@ -228,17 +280,9 @@ function SensorDataPage() {
                         <div id="raw-data-section">
                             <h2>Raw Data</h2>
                             <pre>
-                                {JSON.stringify(
-                                    {
-                                        Timestamp: "1231241412",
-                                        SensorID: selectedSensor ? selectedSensor.sensor_hash : 'N/A',
-                                        Measuring: "Temperature",
-                                        Value: "21.34",
-                                        Unit: "Celsius",
-                                    },
-                                    null,
-                                    2
-                                )}
+                                {liveData
+                                    ? JSON.stringify(liveData, null, 2)
+                                    : "No live data yet"}
                             </pre>
                         </div>
                     )}

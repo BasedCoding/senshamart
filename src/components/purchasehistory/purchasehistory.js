@@ -9,7 +9,7 @@ function PurchaseHistory() {
     const [sortOrder, setSortOrder] = useState("latest");
     const ITEMS_PER_PAGE = 5;
     const navigate = useNavigate();
-    const [cart, setCart] = useState(() => {
+    const [cart] = useState(() => {
         const storedCartItems = localStorage.getItem('cartItems');
         return storedCartItems ? JSON.parse(storedCartItems) : [];
     });
@@ -96,7 +96,7 @@ function PurchaseHistory() {
                     <a href="search-sensors">Search Sensors</a>
                     <a href="purchasehistory">Purchase History</a>
                     <a href="#blog">Blog</a>
-                    <a href="#help">Help</a>
+                    <a href="help">Help</a>
                 </nav>
                 <div className={styles["cart-profile"]}>
                     <div className={styles["cart-container"]}>

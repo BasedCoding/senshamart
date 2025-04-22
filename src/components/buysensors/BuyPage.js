@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import styles from "./BuyPage.module.css";
 
 function BuyPage() {
@@ -183,10 +183,6 @@ function BuyPage() {
         setShowModal(false);
     };
 
-    const removeSensor = useCallback((id) => {
-        setCart(cart.filter((item) => item.id !== id));
-    }, []);
-
     const Cart = () => {
         navigate("/cart");
     };
@@ -205,10 +201,6 @@ function BuyPage() {
         return cart.some((item) => item.id === sensorId);
     };
 
-    const toggleFilterSection = () => {
-        setIsFilterSectionOpen(!isFilterSectionOpen);
-    };
-
     return (
         <div className={styles.app}>
             {notification && <div className={styles.notification}>{notification}</div>}
@@ -224,7 +216,7 @@ function BuyPage() {
                     <a href="search-sensors">Search Sensors</a>
                     <a href="purchasehistory">Purchase History</a>
                     <a href="#blog">Blog</a>
-                    <a href="#help">Help</a>
+                    <a href="help">Help</a>
                 </nav>
                 <div className={styles["cart-profile"]}>
                     <div className={styles["cart-container"]}>
@@ -443,8 +435,32 @@ function BuyPage() {
                         </div>
                     )}
                 </div>
-
             </main>
+                    {/* Footer Section */}
+        <footer className="footer-section">
+          <div className="footer-content">
+              <div className="footer-logo">
+                  <span className="logo-part blue">Sen</span>
+                  <span className="logo-part orange">Sha</span>
+                  <span className="logo-part blue">Mart</span>
+              </div>
+              <div className="footer-links">
+                  <a href="#home">Home</a>
+                  <a href="#about">About Us</a>
+                  <a href="#services">Our Services</a>
+                  <a href="#blog">Blog</a>
+                  <a href="#contact">Contact Us</a>
+                  <a href="#terms">Terms of Service</a>
+              </div>
+              <div className="newsletter-container">
+              <h4 className="newsletter-heading">Sign Up For Our Newsletter!</h4>
+              <div className="newsletter-form">
+                  <input type="text" placeholder="Placeholder Text" />
+                  <button className="signup-button">Sign Up</button>
+              </div>
+          </div>
+          </div>
+      </footer >
         </div>
     );
 }
