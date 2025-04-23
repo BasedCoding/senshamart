@@ -1,8 +1,11 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Info, Pencil, Trash2, Bell, User, ChevronDown } from "lucide-react";
 import styles from "./selldata.module.css";
+
+// Test environment API base (no miner, UI at /wallet.html)
+const API_BASE = "http://136.186.108.87:7001";
 
 export default function SellDataPage() {
   // Form state
@@ -17,6 +20,7 @@ export default function SellDataPage() {
     broker: "",
   });
 
+  
   // Sensors list state
   const [sensors, setSensors] = useState([
     {
@@ -31,7 +35,7 @@ export default function SellDataPage() {
     {
       sensorName: "Sample Sensor Name",
       providerID: "provider123",
-      sensorID: "1216548",
+      sensorID: "1216549",
       costPerMinute: "5",
       costPerKByte: "3",
       unit: "Room Temperature Sensor",
@@ -39,11 +43,73 @@ export default function SellDataPage() {
     },
   ]);
 
+  const [walletKeypair] = useState(
+        "MHQCAQEEIKaHMfh7znw+YmIVPePU2f80mUpi6BKiUYNaAaTN02zJoAcGBSuBBAAKoUQDQgAEWHLcJyFezAjJkaM7Gy/khGCZUcBA0MViZUd3JEA7kFilrWWSPhT7rhfd5qKHAp+3WrEWQXjo0ewJFxIzCHe2fA=="
+    );
+
+ const registerSensor = useCallback(async () => {
+   if (!walletKeypair) return;
+
+   alert(`Registering ${sensors.length} sensors`);
+   for (let i = 0; i < sensors.length; i++) {
+     const sensor = sensors[i];
+     if (!sensor?.sensorName || sensor.registered) continue;
+
+     try {
+       const payload = {
+         keyPair: walletKeypair,
+         sensorName: sensor.sensorName,
+         costPerMinute: Number(sensor.costPerMinute),
+         costPerKB: Number(sensor.costPerKByte),
+         integrationBroker: sensor.broker || null,
+         interval: null,
+         rewardAmount: 0,
+         extraNodeMetadata: [],
+         extraLiteralMetadata: [],
+       };
+
+       if (sensor.extraMetadata) {
+         const meta = JSON.parse(sensor.extraMetadata);
+         if (Array.isArray(meta.node)) payload.extraNodeMetadata = meta.node;
+         if (Array.isArray(meta.literal))
+           payload.extraLiteralMetadata = meta.literal;
+       }
+
+       const res = await fetch(`${API_BASE}/SensorRegistration/Register`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify(payload),
+       });
+
+       const result = await res.json();
+       if (result.result) {
+         setSensors((prev) => {
+           const copy = [...prev];
+           copy[i] = {
+             ...copy[i],
+             registered: true,
+             txHash: result.tx.transactionHash,
+             brokerIp: result.brokerIp,
+           };
+           return copy;
+         });
+       } else {
+         console.error("Registration failed", result);
+       }
+     } catch (err) {
+       console.error("Error registering sensor", err);
+     }
+   }
+
+   alert("All sensors attempted on testnet (miner off)");
+ }, [walletKeypair, sensors]);
+
   // UI state
   const [editingIndex, setEditingIndex] = useState(null);
   // Update the preference level state to start at level 1 (RDF Triples)
   const [preferenceLevel, setPreferenceLevel] = useState(1);
 
+  
   // Handle form input changes
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -133,11 +199,11 @@ export default function SellDataPage() {
     "Based on your profile, we assume you are familiar with RDF Triples and MQTT Broker.",
   ];
 
-  // Register all sensors
-  const handleRegisterAll = () => {
-    alert(`Registering ${sensors.length} sensors`);
-    // Implementation would connect to backend API
-  };
+  // // // Register all sensors
+  // const handleRegisterAll = () => {
+  //   alert(`Registering ${sensors.length} sensors`);
+  //   // Implementation would connect to backend API
+  // };
 
   return (
     <div className={styles.app}>
@@ -381,7 +447,7 @@ export default function SellDataPage() {
             <div className={styles.registerButtonContainer}>
               <button
                 className={styles.registerButton}
-                onClick={handleRegisterAll}
+                onClick={registerSensor}
               >
                 Register IoT Sensor(s)
               </button>
