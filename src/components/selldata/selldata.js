@@ -83,6 +83,7 @@ export default function SellDataPage() {
 
        const result = await res.json();
        if (result.result) {
+         alert("Registration Successful", result);
          setSensors((prev) => {
            const copy = [...prev];
            copy[i] = {
@@ -94,6 +95,7 @@ export default function SellDataPage() {
            return copy;
          });
        } else {
+         alert("Registration failed", result);
          console.error("Registration failed", result);
        }
      } catch (err) {
