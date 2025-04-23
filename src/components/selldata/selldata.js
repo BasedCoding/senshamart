@@ -290,7 +290,7 @@ export default function SellDataPage() {
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="costPerMinute">
-                    Cost per Minute (SensorCoin)*
+                    Cost per Minute (SenSha Coin)*
                   </label>
                   <input
                     id="costPerMinute"
@@ -302,7 +302,7 @@ export default function SellDataPage() {
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="costPerKByte">
-                    Cost per KByte (SensorCoin)*
+                    Cost per KByte (SenSha Coin)*
                   </label>
                   <input
                     id="costPerKByte"
@@ -408,7 +408,7 @@ export default function SellDataPage() {
                   <div className={styles.sensorDetail}>
                     <span className={styles.detailLabel}>Cost Per Minute:</span>
                     <span className={styles.detailValue}>
-                      {sensor.costPerMinute} USD
+                      {sensor.costPerMinute} SenSha Coin
                     </span>
                   </div>
                   <div className={styles.sensorDetail}>
@@ -418,7 +418,7 @@ export default function SellDataPage() {
                   <div className={styles.sensorDetail}>
                     <span className={styles.detailLabel}>Cost Per KByte:</span>
                     <span className={styles.detailValue}>
-                      {sensor.costPerKByte} USD
+                      {sensor.costPerKByte} SenSha Coin
                     </span>
                   </div>
                 </div>
