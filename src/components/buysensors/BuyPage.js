@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import styles from "./BuyPage.module.css";
 
 function BuyPage() {
+    // --- States ---
     const [sensors, setSensors] = useState([]);
     const [filter, setFilter] = useState({
         name: "",
@@ -21,7 +22,6 @@ function BuyPage() {
     const [amount, setAmount] = useState(1);
     const [duration, setDuration] = useState(1);
     const [dutyCycle, setDutyCycle] = useState(1);
-    const navigate = useNavigate();
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [subtotal, setSubtotal] = useState(0);
     const [isFilterSectionOpen, setIsFilterSectionOpen] = useState(true);
@@ -29,6 +29,13 @@ function BuyPage() {
         "MHQCAQEEIKaHMfh7znw+YmIVPePU2f80mUpi6BKiUYNaAaTN02zJoAcGBSuBBAAKoUQDQgAEWHLcJyFezAjJkaM7Gy/khGCZUcBA0MViZUd3JEA7kFilrWWSPhT7rhfd5qKHAp+3WrEWQXjo0ewJFxIzCHe2fA=="
     );
 
+    // --- New states for search mode ---
+    const [searchMode, setSearchMode] = useState("keyword"); // "keyword" or "sparql"
+    const [sparqlQuery, setSparqlQuery] = useState("");
+
+    const navigate = useNavigate();
+
+    // --- Effects ---
     useEffect(() => {
         fetchSensors();
     }, [walletKeypair]);
@@ -45,6 +52,7 @@ function BuyPage() {
         }
     }, [amount, duration, dutyCycle, selectedSensor]);
 
+    // --- Fetch sensors (default query) ---
     const fetchSensors = async () => {
         try {
             const response = await fetch("http://136.186.108.87:7001/sparql", {
@@ -90,7 +98,6 @@ function BuyPage() {
             });
 
             if (!response.ok) {
-                console.error("Failed to fetch sensors:", response.statusText);
                 setNotification("Failed to load sensors.");
                 setTimeout(() => setNotification(""), 5000);
                 return;
@@ -99,17 +106,13 @@ function BuyPage() {
             const data = await response.json();
 
             if (data.result === false) {
-                console.error("API Error:", data.reason);
                 setNotification(`API Error: ${data.reason}`);
                 setTimeout(() => setNotification(""), 5000);
                 return;
             }
 
             if (!data.headers || !Array.isArray(data.headers)) {
-                console.error("Invalid API response:", data);
-                setNotification(
-                    "Failed to load sensors due to invalid API response format."
-                );
+                setNotification("Failed to load sensors due to invalid API response format.");
                 setTimeout(() => setNotification(""), 5000);
                 return;
             }
@@ -131,12 +134,12 @@ function BuyPage() {
             setSensors(parsedData);
             setFilteredSensors(parsedData);
         } catch (error) {
-            console.error("Error fetching sensors:", error);
             setNotification("Error loading sensors.");
             setTimeout(() => setNotification(""), 5000);
         }
     };
 
+    // --- Filter logic ---
     const handleFilterChange = (field, value) => {
         setFilter({ ...filter, [field]: value });
     };
@@ -159,6 +162,59 @@ function BuyPage() {
         setFilteredSensors(sensors);
     };
 
+    // --- SPARQL custom query logic ---
+    const handleSparqlSearch = async () => {
+        if (!sparqlQuery.trim()) {
+            setNotification("Please enter a SPARQL query.");
+            setTimeout(() => setNotification(""), 3000);
+            return;
+        }
+        try {
+            const response = await fetch("http://136.186.108.87:7001/sparql", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    query: sparqlQuery,
+                    walletKeypair: walletKeypair,
+                }),
+            });
+            if (!response.ok) {
+                setNotification("Failed to run SPARQL query.");
+                setTimeout(() => setNotification(""), 5000);
+                return;
+            }
+            const data = await response.json();
+            if (!data.headers || !Array.isArray(data.headers)) {
+                setNotification("Invalid SPARQL response format.");
+                setTimeout(() => setNotification(""), 5000);
+                return;
+            }
+            // Try to map data to your expected object structure
+            const parsedData = data.values.map((item) => {
+                // Attempt to map by header index, fallback to array if headers are different
+                const headerIndex = (header) => data.headers.indexOf(header);
+                return {
+                    sensor_name: item[headerIndex("sensor_name")] || item[0] || "",
+                    sensor_hash: item[headerIndex("sensor_hash")] || item[1] || "",
+                    broker_name: item[headerIndex("broker_name")] || item[2] || "",
+                    broker_hash: item[headerIndex("broker_hash")] || item[3] || "",
+                    broker_endpoint: item[headerIndex("broker_endpoint")] || item[4] || "",
+                    lat: parseFloat(item[headerIndex("lat")] || item[5] || 0),
+                    long: parseFloat(item[headerIndex("long")] || item[6] || 0),
+                    measures: item[headerIndex("measures")] || item[7] || "",
+                    sensor_cpm: parseFloat(item[headerIndex("sensor_cpm")] || item[8] || 0),
+                    sensor_cpkb: parseFloat(item[headerIndex("sensor_cpkb")] || item[9] || 0),
+                    id: item[headerIndex("sensor_hash")] || item[1] || Math.random().toString(),
+                };
+            });
+            setFilteredSensors(parsedData);
+        } catch (error) {
+            setNotification("Error running SPARQL query.");
+            setTimeout(() => setNotification(""), 5000);
+        }
+    };
+
+    // --- UI logic ---
     const openModal = (sensor) => {
         setSelectedSensor(sensor);
         setAmount(1);
@@ -169,13 +225,12 @@ function BuyPage() {
 
     const handleConfirmAdd = () => {
         if (!selectedSensor) return;
-
         const cartItem = {
             ...selectedSensor,
-            amount: Number(amount), 
+            amount: Number(amount),
             duration: Number(duration),
-            dutyCycle: Number(dutyCycle), 
-            subtotal: Number(amount) * Number(duration) * Number(dutyCycle) * Number(selectedSensor.sensor_cpm), 
+            dutyCycle: Number(dutyCycle),
+            subtotal: Number(amount) * Number(duration) * Number(dutyCycle) * Number(selectedSensor.sensor_cpm),
         };
         setCart([...cart, cartItem]);
         setNotification(`${selectedSensor.sensor_name} added to cart!`);
@@ -201,6 +256,17 @@ function BuyPage() {
         return cart.some((item) => item.id === sensorId);
     };
 
+    // --- Reset state when switching modes ---
+    useEffect(() => {
+        if (searchMode === "keyword") {
+            setFilteredSensors(sensors);
+        } else if (searchMode === "sparql") {
+            setSparqlQuery("");
+            setFilteredSensors([]);
+        }
+    }, [searchMode, sensors]);
+
+    // --- Render ---
     return (
         <div className={styles.app}>
             {notification && <div className={styles.notification}>{notification}</div>}
@@ -249,56 +315,88 @@ function BuyPage() {
                 </div>
             </header>
             <main className={styles.container}>
+                {/* Search Mode Toggle */}
+                <div className={styles["search-mode-toggle"]}>
+                    <button
+                    className={searchMode === "keyword" ? styles.active : ""}
+                    onClick={() => setSearchMode("keyword")}
+                    >
+                    Keyword Filter
+                    </button>
+                    <button
+                    className={searchMode === "sparql" ? styles.active : ""}
+                    onClick={() => setSearchMode("sparql")}
+                    >
+                    SPARQL Query
+                    </button>
+                </div>
 
-                <div>
-                    <div className={styles["filter-section"]}>
-                        <div className={styles["filter-header"]}>
-                            <h2>Select IoT Sensors</h2>
-                        </div>
-                        {isFilterSectionOpen && (
-                            <>
-                                <div className={styles["filter-row"]}>
-                                    <input
-                                        type="text"
-                                        className={styles["filter-input"]}
-                                        placeholder="Sensor Name"
-                                        value={filter.name}
-                                        onChange={(e) => handleFilterChange("name", e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className={styles["filter-input"]}
-                                        placeholder="Sensor Type"
-                                        value={filter.type}
-                                        onChange={(e) => handleFilterChange("type", e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className={styles["filter-input"]}
-                                        placeholder="Location"
-                                        value={filter.location}
-                                        onChange={(e) => handleFilterChange("location", e.target.value)}
-                                    />
-                                </div>
-                                <div className={styles["filter-actions"]}>
-                                    <button className={styles["reset-button"]} onClick={handleReset}>
-                                        Reset
-                                    </button>
-                                    <button
-                                        className={styles["apply-button"]}
-                                        onClick={handleApplyFilter}
-                                    >
-                                        Filter
-                                    </button>
-                                </div>
-                                <div className={styles["filter-count"]}>
-                                    {countAppliedFilters()} filters applied.
-                                </div>
-                            </>
-                        )}
+                {/* Shared container box with header */}
+                <div className={styles["filter-section"]}>
+                    <div className={styles["filter-header"]}>
+                    <h2>Select IoT Sensors</h2>
                     </div>
-                    <table className={styles["sensor-table"]}>
-                        <thead>
+
+                    {searchMode === "keyword" ? (
+                    isFilterSectionOpen && (
+                        <>
+                        <div className={styles["filter-row"]}>
+                            <input
+                            type="text"
+                            className={styles["filter-input"]}
+                            placeholder="Sensor Name"
+                            value={filter.name}
+                            onChange={(e) => handleFilterChange("name", e.target.value)}
+                            />
+                            <input
+                            type="text"
+                            className={styles["filter-input"]}
+                            placeholder="Sensor Type"
+                            value={filter.type}
+                            onChange={(e) => handleFilterChange("type", e.target.value)}
+                            />
+                            <input
+                            type="text"
+                            className={styles["filter-input"]}
+                            placeholder="Location"
+                            value={filter.location}
+                            onChange={(e) => handleFilterChange("location", e.target.value)}
+                            />
+                        </div>
+                        <div className={styles["filter-actions"]}>
+                            <button className={styles["reset-button"]} onClick={handleReset}>
+                            Reset
+                            </button>
+                            <button className={styles["apply-button"]} onClick={handleApplyFilter}>
+                            Filter
+                            </button>
+                        </div>
+                        <div className={styles["filter-count"]}>
+                            {countAppliedFilters()} filters applied.
+                        </div>
+                        </>
+                    )
+                    ) : (
+                    // SPARQL Query input in the same box
+                    <>
+                        <textarea
+                        className={styles["sparql-textarea"]}
+                        value={sparqlQuery}
+                        onChange={(e) => setSparqlQuery(e.target.value)}
+                        placeholder="Enter your SPARQL query here"
+                        rows={8}
+                        />
+                        <div className={styles["filter-actions"]}>
+                        <button className={styles["apply-button"]} onClick={handleSparqlSearch}>
+                            Run Query
+                        </button>
+                        </div>
+                    </>
+                    )}
+                </div>
+                {/* --- Sensor Table --- */}
+                <table className={styles["sensor-table"]}>
+                    <thead>
                         <tr>
                             <th>Sensor Name</th>
                             <th>Sensor Hash</th>
@@ -312,8 +410,8 @@ function BuyPage() {
                             <th>Sensor Cpkb</th>
                             <th>Actions</th>
                         </tr>
-                        </thead>
-                        <tbody>
+                    </thead>
+                    <tbody>
                         {filteredSensors.map((sensor, index) => (
                             <tr key={index}>
                                 <td>{sensor.sensor_name}</td>
@@ -342,9 +440,9 @@ function BuyPage() {
                                 </td>
                             </tr>
                         ))}
-                        </tbody>
-                    </table>
-                    {showModal && selectedSensor && (
+                    </tbody>
+                </table>
+                {showModal && selectedSensor && (
                         <div className={styles["modal-overlay"]}>
                             <div className={styles["modal-content"]}>
                                 <button
@@ -434,33 +532,33 @@ function BuyPage() {
                             </div>
                         </div>
                     )}
-                </div>
+                    
             </main>
-                    {/* Footer Section */}
-        <footer className="footer-section">
-          <div className="footer-content">
-              <div className="footer-logo">
-                  <span className="logo-part blue">Sen</span>
-                  <span className="logo-part orange">Sha</span>
-                  <span className="logo-part blue">Mart</span>
-              </div>
-              <div className="footer-links">
-                  <a href="#home">Home</a>
-                  <a href="#about">About Us</a>
-                  <a href="#services">Our Services</a>
-                  <a href="#blog">Blog</a>
-                  <a href="#contact">Contact Us</a>
-                  <a href="#terms">Terms of Service</a>
-              </div>
-              <div className="newsletter-container">
-              <h4 className="newsletter-heading">Sign Up For Our Newsletter!</h4>
-              <div className="newsletter-form">
-                  <input type="text" placeholder="Placeholder Text" />
-                  <button className="signup-button">Sign Up</button>
-              </div>
-          </div>
-          </div>
-      </footer >
+            {/* Footer Section */}
+            <footer className="footer-section">
+            <div className="footer-content">
+                <div className="footer-logo">
+                    <span className="logo-part blue">Sen</span>
+                    <span className="logo-part orange">Sha</span>
+                    <span className="logo-part blue">Mart</span>
+                </div>
+                <div className="footer-links">
+                    <a href="#home">Home</a>
+                    <a href="#about">About Us</a>
+                    <a href="#services">Our Services</a>
+                    <a href="#blog">Blog</a>
+                    <a href="#contact">Contact Us</a>
+                    <a href="#terms">Terms of Service</a>
+                </div>
+                <div className="newsletter-container">
+                <h4 className="newsletter-heading">Sign Up For Our Newsletter!</h4>
+                <div className="newsletter-form">
+                    <input type="text" placeholder="Placeholder Text" />
+                    <button className="signup-button">Sign Up</button>
+                </div>
+            </div>
+            </div>
+        </footer >
         </div>
     );
 }
