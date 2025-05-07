@@ -249,6 +249,10 @@ function BuyPage() {
         setDropdownVisible(!dropdownVisible);
     };
 
+    const Profile = () => {
+        navigate("/profile")
+      }
+
     const countAppliedFilters = () =>
         Object.values(filter).filter(Boolean).length;
 
@@ -305,7 +309,7 @@ function BuyPage() {
                         <span className={styles["dropdown-arrow"]}>&#x25BE;</span>
                         {dropdownVisible && (
                             <div className={styles["dropdown-menu"]}>
-                                <button>Check Profile</button>
+                                <button onClick={Profile}>Check Profile</button>
                                 <button onClick={handleProviderLogin}>
                                     Log in as a Provider
                                 </button>

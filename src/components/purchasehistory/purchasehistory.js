@@ -82,6 +82,10 @@ function PurchaseHistory() {
         pageNumbers.push(i);
     }
 
+    const Profile = () => {
+        navigate("/profile")
+      }
+
     return (
         <div className={styles.app}>
             <header className={styles.header}>
@@ -111,7 +115,7 @@ function PurchaseHistory() {
                         <span className={styles["dropdown-arrow"]}>⌄</span>
                         {dropdownVisible && (
                             <div className={styles["dropdown-menu"]}>
-                                <button>Check Profile</button>
+                                <button onClick={Profile}>Check Profile</button>
                                 <button onClick={handleProviderLogin}>Log in as a Provider</button>
                             </div>
                         )}

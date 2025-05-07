@@ -38,6 +38,10 @@ function HelpPage() {
     setFormData({ name: '', email: '', message: '' });
   };
 
+  const Profile = () => {
+    navigate("/profile")
+  }
+
   return (
     <div className={styles.app}>
       <header className="header">
@@ -61,7 +65,7 @@ function HelpPage() {
             <span className="dropdown-arrow">⌄</span>
             {dropdownVisible && (
               <div className="dropdown-menu">
-                <button>Check Profile</button>
+                <button onClick={Profile}>Check Profile</button>
                 <button onClick={handleProviderLogin}>Log in as a Provider</button>
               </div>
             )}

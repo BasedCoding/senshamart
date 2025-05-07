@@ -44,6 +44,10 @@ function MarketPage() {
     navigate("/client"); 
   };
 
+  const Profile = () => {
+    navigate("/profile")
+  }
+
 
   return (
     <div className="app">
@@ -68,7 +72,7 @@ function MarketPage() {
             <span className="dropdown-arrow">⌄</span>
             {dropdownVisible && (
               <div className="dropdown-menu">
-                <button>Check Profile</button>
+                <button onClick={Profile}>Check Profile</button>
                 <button onClick={handleClientLogin}>Log in as a Client</button>
               </div>
             )}

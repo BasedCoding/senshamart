@@ -15,6 +15,7 @@ import BuyPage from './components/buysensors/BuyPage';
 import SensorDataPage from './components/data/SensorDataPage';
 import Cart from './components/cart/Cart';
 import PurchaseHistory from './components/purchasehistory/purchasehistory';
+import ProfilePage from './profile/ProfilePage';
 import './App.css';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
       <div className="app">
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/client" element={<ClientHomePage />} />
               <Route path='search-sensors' element={<BuyPage />} />
               <Route path='data' element={<SensorDataPage/>} />

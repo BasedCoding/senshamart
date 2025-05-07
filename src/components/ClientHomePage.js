@@ -30,6 +30,10 @@ function ClientHomePage() {
     navigate("/cart")
   }
 
+  const Profile = () => {
+    navigate("/profile")
+  }
+
   return (
     <div className="app">
       <header className="header">
@@ -64,7 +68,7 @@ function ClientHomePage() {
             <span className="dropdown-arrow">⌄</span>
             {dropdownVisible && (
               <div className="dropdown-menu">
-                <button>Check Profile</button>
+                <button onClick={Profile}>Check Profile</button>
                 <button onClick={handleProviderLogin}>Log in as a Provider</button>
               </div>
             )}
