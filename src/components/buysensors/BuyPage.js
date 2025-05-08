@@ -55,7 +55,7 @@ function BuyPage() {
     // --- Fetch sensors (default query) ---
     const fetchSensors = async () => {
         try {
-            const response = await fetch("https://136.186.108.87:7001/sparql", {
+            const response = await fetch("http://136.186.108.87:7001/sparql", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
