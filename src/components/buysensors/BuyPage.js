@@ -3,15 +3,8 @@ import { useNavigate } from "react-router-dom";
 import styles from "./BuyPage.module.css";
 
 function BuyPage() {
-    // --- States ---
-    const [sensors, setSensors] = useState([]);
-    const [filter, setFilter] = useState({
-        name: "",
-        type: "",
-        location: "",
-        measurement: "",
-    });
-    const [filteredSensors, setFilteredSensors] = useState(sensors);
+    const [filter, setFilter] = useState({ name: "", type: "", location: "" });
+    const [filteredSensors, setFilteredSensors] = useState([]);
     const [cart, setCart] = useState(() => {
         const storedCartItems = localStorage.getItem("cartItems");
         return storedCartItems ? JSON.parse(storedCartItems) : [];
@@ -24,21 +17,16 @@ function BuyPage() {
     const [dutyCycle, setDutyCycle] = useState(1);
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [subtotal, setSubtotal] = useState(0);
-    const [isFilterSectionOpen, setIsFilterSectionOpen] = useState(true);
-    const [walletKeypair, setWalletKeypair] = useState(
+    const [isFilterSectionOpen] = useState(true);
+    const [walletKeypair] = useState(
         "MHQCAQEEIKaHMfh7znw+YmIVPePU2f80mUpi6BKiUYNaAaTN02zJoAcGBSuBBAAKoUQDQgAEWHLcJyFezAjJkaM7Gy/khGCZUcBA0MViZUd3JEA7kFilrWWSPhT7rhfd5qKHAp+3WrEWQXjo0ewJFxIzCHe2fA=="
     );
-
-    // --- New states for search mode ---
-    const [searchMode, setSearchMode] = useState("keyword"); // "keyword" or "sparql"
+    const [hasSearched, setHasSearched] = useState(false);
+    // --- New for search mode toggle ---
+    const [searchMode, setSearchMode] = useState("keyword"); // or "sparql"
     const [sparqlQuery, setSparqlQuery] = useState("");
 
     const navigate = useNavigate();
-
-    // --- Effects ---
-    useEffect(() => {
-        fetchSensors();
-    }, [walletKeypair]);
 
     useEffect(() => {
         localStorage.setItem("cartItems", JSON.stringify(cart));
@@ -52,14 +40,28 @@ function BuyPage() {
         }
     }, [amount, duration, dutyCycle, selectedSensor]);
 
-    // --- Fetch sensors (default query) ---
-    const fetchSensors = async () => {
-        try {
-            const response = await fetch("http://136.186.108.87:7001/sparql", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    query: `
+    // --- Keyword search handler ---
+    const fetchSensors = async (searchFilter) => {
+        if (
+            !searchFilter.name.trim() &&
+            !searchFilter.type.trim() &&
+            !searchFilter.location.trim()
+        ) {
+            setFilteredSensors([]);
+            setHasSearched(true);
+            return;
+        }
+        let filterClauses = [];
+        if (searchFilter.name.trim()) {
+            filterClauses.push(`FILTER(CONTAINS(LCASE(?sensor_name), "${searchFilter.name.trim().toLowerCase()}"))`);
+        }
+        if (searchFilter.type.trim()) {
+            filterClauses.push(`FILTER(CONTAINS(LCASE(?measures), "${searchFilter.type.trim().toLowerCase()}"))`);
+        }
+        if (searchFilter.location.trim()) {
+            filterClauses.push(`FILTER(CONTAINS(LCASE(?broker_name), "${searchFilter.location.trim().toLowerCase()}"))`);
+        }
+        const sparql = `
             PREFIX ssm: <ssm://>
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX sosa: <http://www.w3.org/ns/sosa/>
@@ -74,13 +76,11 @@ function BuyPage() {
               ?sensor_tx ssm:CostsPerMinute ?sensor_cpm.
               ?sensor_tx ssm:CostsPerKB ?sensor_cpkb.
               FILTER NOT EXISTS { ?x ssm:Supercedes ?sensor_tx }.
-              
               ?broker_tx ssm:Defines ?broker_name.
               ?broker_tx rdf:type "ssm://BrokerRegistration".
               ?broker_tx ssm:HasHash ?broker_hash.
               ?broker_tx ssm:HasEndpoint ?broker_endpoint.
               FILTER NOT EXISTS { ?x ssm:Supercedes ?broker_tx }.
-              
               ?sensor_tx sosa:observes ?observes.
               ?sensor_tx sosa:hasFeatureOfInterest ?location.
               ?observes rdfs:label ?measures.
@@ -92,31 +92,29 @@ function BuyPage() {
                 && xsd:decimal(?lat) > -43.6345972634
                 && xsd:decimal(?lat) < -10.6681857235
               )
-            }`,
+              ${filterClauses.join('\n')}
+            }
+        `;
+        try {
+            const response = await fetch("http://136.186.108.87:7001/sparql", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    query: sparql,
                     walletKeypair: walletKeypair,
                 }),
             });
-
             if (!response.ok) {
                 setNotification("Failed to load sensors.");
                 setTimeout(() => setNotification(""), 5000);
                 return;
             }
-
             const data = await response.json();
-
-            if (data.result === false) {
-                setNotification(`API Error: ${data.reason}`);
-                setTimeout(() => setNotification(""), 5000);
-                return;
-            }
-
             if (!data.headers || !Array.isArray(data.headers)) {
-                setNotification("Failed to load sensors due to invalid API response format.");
+                setNotification("Invalid API response.");
                 setTimeout(() => setNotification(""), 5000);
                 return;
             }
-
             const parsedData = data.values.map((item) => ({
                 sensor_name: item[0],
                 sensor_hash: item[1],
@@ -130,39 +128,15 @@ function BuyPage() {
                 sensor_cpkb: parseFloat(item[9]),
                 id: item[1],
             }));
-
-            setSensors(parsedData);
             setFilteredSensors(parsedData);
+            setHasSearched(true);
         } catch (error) {
             setNotification("Error loading sensors.");
             setTimeout(() => setNotification(""), 5000);
         }
     };
 
-    // --- Filter logic ---
-    const handleFilterChange = (field, value) => {
-        setFilter({ ...filter, [field]: value });
-    };
-
-    const handleApplyFilter = () => {
-        const filtered = sensors.filter(
-            (sensor) =>
-                (filter.name === "" ||
-                    sensor.sensor_name.toLowerCase().includes(filter.name.toLowerCase())) &&
-                (filter.type === "" ||
-                    sensor.measures.toLowerCase().includes(filter.type.toLowerCase())) &&
-                (filter.location === "" ||
-                    sensor.broker_name.toLowerCase().includes(filter.location.toLowerCase()))
-        );
-        setFilteredSensors(filtered);
-    };
-
-    const handleReset = () => {
-        setFilter({ name: "", type: "", location: "", measurement: "" });
-        setFilteredSensors(sensors);
-    };
-
-    // --- SPARQL custom query logic ---
+    // --- SPARQL search handler ---
     const handleSparqlSearch = async () => {
         if (!sparqlQuery.trim()) {
             setNotification("Please enter a SPARQL query.");
@@ -189,9 +163,8 @@ function BuyPage() {
                 setTimeout(() => setNotification(""), 5000);
                 return;
             }
-            // Try to map data to your expected object structure
             const parsedData = data.values.map((item) => {
-                // Attempt to map by header index, fallback to array if headers are different
+                // Map by header index, fallback to array index
                 const headerIndex = (header) => data.headers.indexOf(header);
                 return {
                     sensor_name: item[headerIndex("sensor_name")] || item[0] || "",
@@ -208,13 +181,27 @@ function BuyPage() {
                 };
             });
             setFilteredSensors(parsedData);
+            setHasSearched(true);
         } catch (error) {
             setNotification("Error running SPARQL query.");
             setTimeout(() => setNotification(""), 5000);
         }
     };
 
-    // --- UI logic ---
+    const handleFilterChange = (field, value) => {
+        setFilter({ ...filter, [field]: value });
+    };
+
+    const handleSearch = () => {
+        fetchSensors(filter);
+    };
+
+    const handleReset = () => {
+        setFilter({ name: "", type: "", location: "" });
+        setFilteredSensors([]);
+        setHasSearched(false);
+    };
+
     const openModal = (sensor) => {
         setSelectedSensor(sensor);
         setAmount(1);
@@ -249,28 +236,17 @@ function BuyPage() {
         setDropdownVisible(!dropdownVisible);
     };
 
-    const Profile = () => {
-        navigate("/profile")
-      }
-
-    const countAppliedFilters = () =>
-        Object.values(filter).filter(Boolean).length;
-
     const isSensorInCart = (sensorId) => {
         return cart.some((item) => item.id === sensorId);
     };
 
-    // --- Reset state when switching modes ---
+    // --- Reset state on mode switch ---
     useEffect(() => {
-        if (searchMode === "keyword") {
-            setFilteredSensors(sensors);
-        } else if (searchMode === "sparql") {
-            setSparqlQuery("");
-            setFilteredSensors([]);
-        }
-    }, [searchMode, sensors]);
+        setFilteredSensors([]);
+        setHasSearched(false);
+        setSparqlQuery("");
+    }, [searchMode]);
 
-    // --- Render ---
     return (
         <div className={styles.app}>
             {notification && <div className={styles.notification}>{notification}</div>}
@@ -309,7 +285,7 @@ function BuyPage() {
                         <span className={styles["dropdown-arrow"]}>&#x25BE;</span>
                         {dropdownVisible && (
                             <div className={styles["dropdown-menu"]}>
-                                <button onClick={Profile}>Check Profile</button>
+                                <button>Check Profile</button>
                                 <button onClick={handleProviderLogin}>
                                     Log in as a Provider
                                 </button>
@@ -322,247 +298,205 @@ function BuyPage() {
                 {/* Search Mode Toggle */}
                 <div className={styles["search-mode-toggle"]}>
                     <button
-                    className={searchMode === "keyword" ? styles.active : ""}
-                    onClick={() => setSearchMode("keyword")}
+                        className={searchMode === "keyword" ? styles.active : ""}
+                        onClick={() => setSearchMode("keyword")}
                     >
-                    Keyword Filter
+                        Keyword Search
                     </button>
                     <button
-                    className={searchMode === "sparql" ? styles.active : ""}
-                    onClick={() => setSearchMode("sparql")}
+                        className={searchMode === "sparql" ? styles.active : ""}
+                        onClick={() => setSearchMode("sparql")}
                     >
-                    SPARQL Query
+                        SPARQL Query
                     </button>
                 </div>
-
-                {/* Shared container box with header */}
+                {/* Shared filter box */}
                 <div className={styles["filter-section"]}>
                     <div className={styles["filter-header"]}>
-                    <h2>Select IoT Sensors</h2>
+                        <h2>Select IoT Sensors</h2>
                     </div>
-
                     {searchMode === "keyword" ? (
-                    isFilterSectionOpen && (
-                        <>
-                        <div className={styles["filter-row"]}>
-                            <input
-                            type="text"
-                            className={styles["filter-input"]}
-                            placeholder="Sensor Name"
-                            value={filter.name}
-                            onChange={(e) => handleFilterChange("name", e.target.value)}
-                            />
-                            <input
-                            type="text"
-                            className={styles["filter-input"]}
-                            placeholder="Sensor Type"
-                            value={filter.type}
-                            onChange={(e) => handleFilterChange("type", e.target.value)}
-                            />
-                            <input
-                            type="text"
-                            className={styles["filter-input"]}
-                            placeholder="Location"
-                            value={filter.location}
-                            onChange={(e) => handleFilterChange("location", e.target.value)}
-                            />
-                        </div>
-                        <div className={styles["filter-actions"]}>
-                            <button className={styles["reset-button"]} onClick={handleReset}>
-                            Reset
-                            </button>
-                            <button className={styles["apply-button"]} onClick={handleApplyFilter}>
-                            Filter
-                            </button>
-                        </div>
-                        <div className={styles["filter-count"]}>
-                            {countAppliedFilters()} filters applied.
-                        </div>
-                        </>
-                    )
+                        isFilterSectionOpen && (
+                            <>
+                                <div className={styles["filter-row"]}>
+                                    <input
+                                        type="text"
+                                        className={styles["filter-input"]}
+                                        placeholder="Sensor Name"
+                                        value={filter.name}
+                                        onChange={(e) => handleFilterChange("name", e.target.value)}
+                                    />
+                                    <input
+                                        type="text"
+                                        className={styles["filter-input"]}
+                                        placeholder="Sensor Type"
+                                        value={filter.type}
+                                        onChange={(e) => handleFilterChange("type", e.target.value)}
+                                    />
+                                    <input
+                                        type="text"
+                                        className={styles["filter-input"]}
+                                        placeholder="Location"
+                                        value={filter.location}
+                                        onChange={(e) => handleFilterChange("location", e.target.value)}
+                                    />
+                                </div>
+                                <div className={styles["filter-actions"]}>
+                                    <button className={styles["reset-button"]} onClick={handleReset}>
+                                        Reset
+                                    </button>
+                                    <button
+                                        className={styles["apply-button"]}
+                                        onClick={handleSearch}
+                                    >
+                                        Search
+                                    </button>
+                                </div>
+                            </>
+                        )
                     ) : (
-                    // SPARQL Query input in the same box
-                    <>
-                        <textarea
-                        className={styles["sparql-textarea"]}
-                        value={sparqlQuery}
-                        onChange={(e) => setSparqlQuery(e.target.value)}
-                        placeholder="Enter your SPARQL query here"
-                        rows={8}
-                        />
-                        <div className={styles["filter-actions"]}>
-                        <button className={styles["apply-button"]} onClick={handleSparqlSearch}>
-                            Run Query
-                        </button>
-                        </div>
-                    </>
+                        <>
+                            <textarea
+                                className={styles["sparql-textarea"]}
+                                value={sparqlQuery}
+                                onChange={e => setSparqlQuery(e.target.value)}
+                                placeholder="Enter your SPARQL query here"
+                                rows={8}
+                            />
+                            <div className={styles["filter-actions"]}>
+                                <button
+                                    className={styles["apply-button"]}
+                                    onClick={handleSparqlSearch}
+                                >
+                                    Run Query
+                                </button>
+                            </div>
+                        </>
                     )}
                 </div>
-                {/* --- Sensor Table --- */}
-                <table className={styles["sensor-table"]}>
-                    <thead>
-                        <tr>
-                            <th>Sensor Name</th>
-                            <th>Sensor Hash</th>
-                            <th>Broker Name</th>
-                            <th>Broker Hash</th>
-                            <th>Broker Endpoint</th>
-                            <th>Latitude</th>
-                            <th>Longitude</th>
-                            <th>Measures</th>
-                            <th>Sensor CPM</th>
-                            <th>Sensor Cpkb</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredSensors.map((sensor, index) => (
-                            <tr key={index}>
-                                <td>{sensor.sensor_name}</td>
-                                <td>{sensor.sensor_hash}</td>
-                                <td>{sensor.broker_name}</td>
-                                <td>{sensor.broker_hash}</td>
-                                <td>{sensor.broker_endpoint}</td>
-                                <td>{sensor.lat}</td>
-                                <td>{sensor.long}</td>
-                                <td>{sensor.measures}</td>
-                                <td>{sensor.sensor_cpm}</td>
-                                <td>{sensor.sensor_cpkb}</td>
-                                <td>
-                                    {isSensorInCart(sensor.id) ? (
-                                        <button className={styles["added-to-cart-button"]} disabled>
-                                            Added to Cart
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className={styles["add-to-cart-button"]}
-                                            onClick={() => openModal(sensor)}
-                                        >
-                                            Add to Cart
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                {/* Results */}
+                {hasSearched ? (
+                    filteredSensors.length === 0 ? (
+                        <p>No sensors found.</p>
+                    ) : (
+                        <table className={styles["sensor-table"]}>
+                            <thead>
+                                <tr>
+                                    <th>Sensor Name</th>
+                                    <th>Sensor Hash</th>
+                                    <th>Broker Name</th>
+                                    <th>Broker Hash</th>
+                                    <th>Broker Endpoint</th>
+                                    <th>Latitude</th>
+                                    <th>Longitude</th>
+                                    <th>Measures</th>
+                                    <th>Sensor CPM</th>
+                                    <th>Sensor Cpkb</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredSensors.map((sensor, index) => (
+                                    <tr key={index}>
+                                        <td>{sensor.sensor_name}</td>
+                                        <td>{sensor.sensor_hash}</td>
+                                        <td>{sensor.broker_name}</td>
+                                        <td>{sensor.broker_hash}</td>
+                                        <td>{sensor.broker_endpoint}</td>
+                                        <td>{sensor.lat}</td>
+                                        <td>{sensor.long}</td>
+                                        <td>{sensor.measures}</td>
+                                        <td>{sensor.sensor_cpm}</td>
+                                        <td>{sensor.sensor_cpkb}</td>
+                                        <td>
+                                            {isSensorInCart(sensor.id) ? (
+                                                <button className={styles["added-to-cart-button"]} disabled>
+                                                    Added to Cart
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className={styles["add-to-cart-button"]}
+                                                    onClick={() => openModal(sensor)}
+                                                >
+                                                    Add to Cart
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )
+                ) : (
+                    <p>Enter a search term and click Search.</p>
+                )}
+                {/* Modal */}
                 {showModal && selectedSensor && (
-                        <div className={styles["modal-overlay"]}>
-                            <div className={styles["modal-content"]}>
-                                <button
-                                    className={styles["close-button"]}
-                                    onClick={() => setShowModal(false)}
-                                >
-                                    &times;
-                                </button>
-                                <h5 className={styles["modal-title"]}>Add to Cart</h5>
-                                <div className={styles["modal-row"]}>
-                                    <label>Sensor Name:</label>
-                                    <span>{selectedSensor.sensor_name}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Sensor Hash:</label>
-                                    <span>{selectedSensor.sensor_hash}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Broker Name:</label>
-                                    <span>{selectedSensor.broker_name}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Broker Endpoint:</label>
-                                    <span>{selectedSensor.broker_endpoint}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Latitude:</label>
-                                    <span>{selectedSensor.lat}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Longitude:</label>
-                                    <span>{selectedSensor.long}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Measures:</label>
-                                    <span>{selectedSensor.measures}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Cost Per Minute:</label>
-                                    <span>{selectedSensor.sensor_cpm}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Cost Per KByte:</label>
-                                    <span>{selectedSensor.sensor_cpkb}</span>
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Amount*</label>
-                                    <input
-                                        type="number"
-                                        value={amount}
-                                        onChange={(e) => setAmount(parseInt(e.target.value))}
-                                    />
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Duration (Minutes)*</label>
-                                    <input
-                                        type="number"
-                                        value={duration}
-                                        onChange={(e) => setDuration(parseInt(e.target.value))}
-                                    />
-                                </div>
-                                <div className={styles["modal-row"]}>
-                                    <label>Duty Cycle*</label>
-                                    <input
-                                        type="number"
-                                        value={dutyCycle}
-                                        onChange={(e) => setDutyCycle(parseInt(e.target.value))}
-                                    />
+                    <div className={styles["modal-overlay"]}>
+                        <div className={styles["modal-content"]}>
+                            <button
+                                className={styles["close-button"]}
+                                onClick={() => setShowModal(false)}
+                            >
+                                &times;
+                            </button>
+                            <h5 className={styles["modal-title"]}>Add to Cart</h5>
+                            <div>
+                                <p>
+                                    <strong>Sensor:</strong> {selectedSensor.sensor_name}
+                                </p>
+                                <p>
+                                    <strong>Broker:</strong> {selectedSensor.broker_name}
+                                </p>
+                                <p>
+                                    <strong>Measures:</strong> {selectedSensor.measures}
+                                </p>
+                                <p>
+                                    <strong>CPM:</strong> {selectedSensor.sensor_cpm}
+                                </p>
+                                <div className={styles["modal-inputs"]}>
+                                    <label>
+                                        Amount:
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={amount}
+                                            onChange={e => setAmount(Number(e.target.value))}
+                                        />
+                                    </label>
+                                    <label>
+                                        Duration (minutes):
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={duration}
+                                            onChange={e => setDuration(Number(e.target.value))}
+                                        />
+                                    </label>
+                                    <label>
+                                        Duty Cycle:
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={dutyCycle}
+                                            onChange={e => setDutyCycle(Number(e.target.value))}
+                                        />
+                                    </label>
                                 </div>
                                 <div className={styles["modal-subtotal"]}>
-                                    <b>Subtotal: {subtotal.toFixed(2)}</b>
+                                    <strong>Subtotal:</strong> {subtotal}
                                 </div>
-                                <div className={styles["modal-actions"]}>
-                                    <button
-                                        className={styles["cancel-button"]}
-                                        onClick={() => setShowModal(false)}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        className={styles["confirm-button"]}
-                                        onClick={handleConfirmAdd}
-                                    >
-                                        Add to Cart
-                                    </button>
-                                </div>
+                                <button
+                                    className={styles["confirm-button"]}
+                                    onClick={handleConfirmAdd}
+                                >
+                                    Confirm Add
+                                </button>
                             </div>
                         </div>
-                    )}
-                    
+                    </div>
+                )}
             </main>
-            {/* Footer Section */}
-            <footer className="footer-section">
-            <div className="footer-content">
-                <div className="footer-logo">
-                    <span className="logo-part blue">Sen</span>
-                    <span className="logo-part orange">Sha</span>
-                    <span className="logo-part blue">Mart</span>
-                </div>
-                <div className="footer-links">
-                    <a href="#home">Home</a>
-                    <a href="#about">About Us</a>
-                    <a href="#services">Our Services</a>
-                    <a href="#blog">Blog</a>
-                    <a href="#contact">Contact Us</a>
-                    <a href="#terms">Terms of Service</a>
-                </div>
-                <div className="newsletter-container">
-                <h4 className="newsletter-heading">Sign Up For Our Newsletter!</h4>
-                <div className="newsletter-form">
-                    <input type="text" placeholder="Placeholder Text" />
-                    <button className="signup-button">Sign Up</button>
-                </div>
-            </div>
-            </div>
-        </footer >
         </div>
     );
 }
