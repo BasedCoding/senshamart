@@ -5,7 +5,7 @@ import { Info, Pencil, Trash2, Bell, User, ChevronDown } from "lucide-react";
 import styles from "./selldata.module.css";
 
 // Test environment API base (no miner, UI at /wallet.html)
-const API_BASE = "http://136.186.108.87:7001";
+const API_BASE = "http://localhost:7001";
 
 export default function SellDataPage() {
   // Form state

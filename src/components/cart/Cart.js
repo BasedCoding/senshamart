@@ -23,7 +23,7 @@ function Cart() {
 
     const fetchBalance = async () => {
         try {
-            const response = await fetch('https://136.186.108.87:7001/Balance', {
+            const response = await fetch('http://136.186.108.87:7001/Balance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pubKey: walletKeypair })
@@ -65,7 +65,7 @@ function Cart() {
                 }))
             };
 
-            const response = await fetch('https://136.186.108.87:7001/Integration/Register', {
+            const response = await fetch('http://136.186.108.87:7001/Integration/Register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(integrationData)
