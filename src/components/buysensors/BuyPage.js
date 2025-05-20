@@ -86,12 +86,6 @@ function BuyPage() {
               ?observes rdfs:label ?measures.
               ?location geo:lat ?lat.
               ?location geo:long ?long.
-              FILTER (
-                xsd:decimal(?long) > 113.338953078
-                && xsd:decimal(?long) < 153.569469029
-                && xsd:decimal(?lat) > -43.6345972634
-                && xsd:decimal(?lat) < -10.6681857235
-              )
               ${filterClauses.join('\n')}
             }
         `;
