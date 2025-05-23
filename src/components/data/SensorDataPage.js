@@ -4,30 +4,44 @@ import mqtt from "mqtt";
 import "./SensorDataPage.css";
 import { useNavigate } from "react-router-dom";
 
+const LOCAL_STORAGE_KEY = "sensorDataHistory";
+
 function SensorDataPage() {
   const [cartCount, setCartCount] = useState(0);
   const [activeTab, setActiveTab] = useState("graph");
   const [purchasedSensors, setPurchasedSensors] = useState([]);
   const [selectedSensorIndex, setSelectedSensorIndex] = useState(null);
+  const [liveDataList, setLiveDataList] = useState(() => {
+    // Load from localStorage on first render
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  });
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const navigate = useNavigate();
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
-  // MQTT state
-  const [liveData, setLiveData] = useState(null);
+  // MQTT connection details
+  const broker = "ws://test.mosquitto.org:8081";
+  const defaultTopic = "out/test";
+  const [topic, setTopic] = useState(defaultTopic);
 
-  // MQTT connection details - using hardcoded values
-  const broker = "mqtt://136.186.108.94:5003";
-  const defaultTopic = "out/test"; 
-  const [topic, setTopic] = useState(defaultTopic); 
-  const [client, setClient] = useState(null);
+  // Default test sensor object
+  const defaultSensor = {
+    sensor_name: "Default Test Sensor",
+    sensor_hash: "test-sensor-001",
+    measures: "Temperature",
+    lat: "0",
+    long: "0",
+    amount: "-",
+    duration: "-",
+    dutyCycle: "-",
+    purchaseDate: "-",
+    invoiceNumber: "-"
+  };
 
+  // Load purchase history on mount
   useEffect(() => {
-    loadPurchaseHistory();
-  }, []);
-
-  const loadPurchaseHistory = () => {
     const storedPurchaseHistory = localStorage.getItem("purchaseHistory");
     if (storedPurchaseHistory) {
       const parsedHistory = JSON.parse(storedPurchaseHistory);
@@ -37,97 +51,110 @@ function SensorDataPage() {
       setPurchasedSensors([]);
       setSelectedSensorIndex(null);
     }
-  };
+  }, []);
 
-  // --- MQTT SUBSCRIPTION ---
+  // Set topic based on sensor selection
   useEffect(() => {
-    // Connect to MQTT broker
-    const newClient = mqtt.connect(broker);
+    if (purchasedSensors.length > 0 && selectedSensorIndex !== null) {
+      setTopic(getTopicForSensor(selectedSensorIndex));
+    } else {
+      setTopic(defaultTopic);
+    }
+    // Don't clear liveDataList here, so data persists on navigation
+  }, [selectedSensorIndex, purchasedSensors]);
 
-    newClient.on("connect", () => {
-      console.log("Connected to MQTT broker");
-      newClient.subscribe(topic, (err) => {
+  // MQTT SUBSCRIPTION
+  useEffect(() => {
+    const client = mqtt.connect(broker);
+
+    client.on("connect", () => {
+      client.subscribe(topic, (err) => {
         if (!err) {
           console.log(`Subscribed to topic: ${topic}`);
-        } else {
-          console.error("Subscription error:", err);
         }
       });
     });
 
-    newClient.on("message", (t, message) => {
-      // Parse and store the latest message
+    client.on("message", (t, message) => {
       try {
         const parsed = JSON.parse(message.toString());
-        setLiveData(parsed);
+        setLiveDataList(prev => {
+          const next = [...prev.slice(-19), parsed]; // keep last 20 points
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next));
+          return next;
+        });
       } catch (e) {
-        console.error("Error parsing message:", e);
-        setLiveData({ raw: message.toString() });
+        setLiveDataList(prev => {
+          const next = [...prev.slice(-19), { raw: message.toString() }];
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(next));
+          return next;
+        });
       }
     });
 
-    newClient.on("error", (err) => {
+    client.on("error", (err) => {
       console.error("MQTT error:", err);
     });
 
-    setClient(newClient);
-
     return () => {
-      console.log("Unsubscribing and disconnecting MQTT client");
-      newClient.unsubscribe(topic);
-      newClient.end();
+      client.unsubscribe(topic);
+      client.end();
     };
-  }, [topic]); 
+  }, [topic]);
 
-  // --- CHART UPDATE ---
+  // CHART UPDATE
   useEffect(() => {
-    if (activeTab === "graph" && selectedSensorIndex !== null) {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-
-      const ctx = chartRef.current.getContext("2d");
-      chartInstance.current = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: ["Current"],
-          datasets: [
-            {
-              label: "Sensor Value",
-              data: liveData && liveData.data ? [Number(liveData.data)] : [0], 
-              borderColor: "#f06e4b",
-              borderWidth: 2,
-              fill: false,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                stepSize: 10,
-              },
-            },
-          },
-          plugins: {
-            legend: {
-              display: false,
-            },
-          },
-        },
-      });
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
     }
-
+    const ctx = chartRef.current.getContext("2d");
+    const labels = liveDataList.map(
+      d => d.Timestamp
+        ? new Date(Number(d.Timestamp) * 1000).toLocaleTimeString()
+        : ""
+    );
+    const dataPoints = liveDataList.map(
+      d => Number(d.Value || d.data || 0)
+    );
+    chartInstance.current = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Sensor Value",
+            data: dataPoints,
+            borderColor: "#f06e4b",
+            borderWidth: 2,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 40,
+            ticks: {
+              stepSize: 5,
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+      },
+    });
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
       }
     };
-  }, [activeTab, selectedSensorIndex, purchasedSensors, liveData]);
+  }, [liveDataList]);
 
   useEffect(() => {
     const storedCartItems = localStorage.getItem("cartItems");
@@ -151,24 +178,16 @@ function SensorDataPage() {
     navigate("/provider");
   };
 
-  const selectedSensor = purchasedSensors[selectedSensorIndex];
+  // Get selected sensor or default
+  const selectedSensor =
+    purchasedSensors.length > 0 && selectedSensorIndex !== null
+      ? purchasedSensors[selectedSensorIndex]
+      : defaultSensor;
 
   // Incrementing topic for each sensor
   const getTopicForSensor = (index) => {
     return `out/wmsaOr0eXoc4jcgUx1ectq9ICjASf-dBw-qdYlrqs1k=/${index}`;
   };
-
-  useEffect(() => {
-    if (selectedSensorIndex !== null && purchasedSensors.length > 0) {
-      const newTopic = getTopicForSensor(selectedSensorIndex);
-      console.log(`Changing topic to: ${newTopic}`);
-      setTopic(newTopic);
-    }
-  }, [selectedSensorIndex, purchasedSensors]);
-
-  const Profile = () => {
-    navigate("/profile")
-  }
 
   return (
     <div className="app">
@@ -184,7 +203,7 @@ function SensorDataPage() {
           <a href="/search-sensors">Search Sensors</a>
           <a href="/purchasehistory">Purchase History</a>
           <a href="#blog">Blog</a>
-          <a href="help">Help</a>
+          <a href="#help">Help</a>
         </nav>
         <div className="cart-profile">
           <div className="cart-container">
@@ -193,14 +212,13 @@ function SensorDataPage() {
               <span className="cart-count">{cartCount}</span>
             </div>
           </div>
-
           <div className="separator">|</div>
           <div className="profile-container" onClick={toggleDropdown}>
             <img src="/profile.png" alt="Profile Icon" className="profile-icon" />
             <span className="dropdown-arrow">⌄</span>
             {dropdownVisible && (
               <div className="dropdown-menu">
-                <button onClick={Profile}>Check Profile</button>
+                <button>Check Profile</button>
                 <button onClick={handleProviderLogin}>Log in as a Provider</button>
               </div>
             )}
@@ -213,12 +231,23 @@ function SensorDataPage() {
           <label htmlFor="sensor-dropdown">Select Sensor:</label>
           <select
             id="sensor-dropdown"
-            value={selectedSensorIndex === null ? "" : selectedSensorIndex}
-            onChange={(e) => setSelectedSensorIndex(Number(e.target.value))}
+            value={
+              purchasedSensors.length > 0 && selectedSensorIndex !== null
+                ? selectedSensorIndex
+                : "default"
+            }
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "default") {
+                setSelectedSensorIndex(null);
+              } else {
+                setSelectedSensorIndex(Number(val));
+              }
+            }}
             disabled={purchasedSensors.length === 0}
           >
             {purchasedSensors.length === 0 ? (
-              <option>No sensors purchased</option>
+              <option value="default">Default Test Sensor</option>
             ) : (
               purchasedSensors.map((sensor, index) => (
                 <option key={index} value={index}>
@@ -291,10 +320,10 @@ function SensorDataPage() {
         <div className="toggle-content">
           {activeTab === "graph" && (
             <div id="graph-section">
-              <h2>Sensor Data</h2>
+              <h2>Temperature Data</h2>
               <p>
-                {liveData && liveData.data
-                  ? `${liveData.data} (Live)`
+                {liveDataList.length > 0 && (liveDataList[liveDataList.length - 1].Value || liveDataList[liveDataList.length - 1].data)
+                  ? `${liveDataList[liveDataList.length - 1].Value || liveDataList[liveDataList.length - 1].data}°C (Live)`
                   : "No live data yet"}
               </p>
               <canvas ref={chartRef} className="sensor-chart"></canvas>
@@ -303,18 +332,22 @@ function SensorDataPage() {
           {activeTab === "raw-data" && (
             <div id="raw-data-section">
               <h2>Raw Data</h2>
-              <pre>{liveData ? JSON.stringify(liveData, null, 2) : "No live data yet"}</pre>
+              <pre>
+                {liveDataList.length > 0
+                  ? JSON.stringify(liveDataList, null, 2)
+                  : "No live data yet"}
+              </pre>
             </div>
           )}
           {activeTab === "data-access" && (
             <div id="data-access-section">
               <h2>Data Access Information</h2>
               <p>Protocol: MQTT</p>
-              <p>Broker IP: mqtt://136.186.108.94:5003</p>
+              <p>Broker IP: ws://test.mosquitto.org:8081</p>
               <p>
                 Topic: {purchasedSensors.length > 0 && selectedSensorIndex !== null
                   ? getTopicForSensor(selectedSensorIndex)
-                  : "N/A"}
+                  : defaultTopic}
               </p>
             </div>
           )}

@@ -425,71 +425,96 @@ function BuyPage() {
                     <p>Enter a search term and click Search.</p>
                 )}
                 {/* Modal */}
-                {showModal && selectedSensor && (
-                    <div className={styles["modal-overlay"]}>
-                        <div className={styles["modal-content"]}>
-                            <button
-                                className={styles["close-button"]}
-                                onClick={() => setShowModal(false)}
-                            >
-                                &times;
-                            </button>
-                            <h5 className={styles["modal-title"]}>Add to Cart</h5>
-                            <div>
-                                <p>
-                                    <strong>Sensor:</strong> {selectedSensor.sensor_name}
-                                </p>
-                                <p>
-                                    <strong>Broker:</strong> {selectedSensor.broker_name}
-                                </p>
-                                <p>
-                                    <strong>Measures:</strong> {selectedSensor.measures}
-                                </p>
-                                <p>
-                                    <strong>CPM:</strong> {selectedSensor.sensor_cpm}
-                                </p>
-                                <div className={styles["modal-inputs"]}>
-                                    <label>
-                                        Amount:
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={amount}
-                                            onChange={e => setAmount(Number(e.target.value))}
-                                        />
-                                    </label>
-                                    <label>
-                                        Duration (minutes):
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={duration}
-                                            onChange={e => setDuration(Number(e.target.value))}
-                                        />
-                                    </label>
-                                    <label>
-                                        Duty Cycle:
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={dutyCycle}
-                                            onChange={e => setDutyCycle(Number(e.target.value))}
-                                        />
-                                    </label>
+                                {showModal && selectedSensor && (
+                        <div className={styles["modal-overlay"]}>
+                            <div className={styles["modal-content"]}>
+                                <button
+                                    className={styles["close-button"]}
+                                    onClick={() => setShowModal(false)}
+                                >
+                                    &times;
+                                </button>
+                                <h5 className={styles["modal-title"]}>Add to Cart</h5>
+                                <div className={styles["modal-row"]}>
+                                    <label>Sensor Name:</label>
+                                    <span>{selectedSensor.sensor_name}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Sensor Hash:</label>
+                                    <span>{selectedSensor.sensor_hash}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Broker Name:</label>
+                                    <span>{selectedSensor.broker_name}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Broker Endpoint:</label>
+                                    <span>{selectedSensor.broker_endpoint}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Latitude:</label>
+                                    <span>{selectedSensor.lat}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Longitude:</label>
+                                    <span>{selectedSensor.long}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Measures:</label>
+                                    <span>{selectedSensor.measures}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Cost Per Minute:</label>
+                                    <span>{selectedSensor.sensor_cpm}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Cost Per KByte:</label>
+                                    <span>{selectedSensor.sensor_cpkb}</span>
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Amount*</label>
+                                    <input
+                                        type="number"
+                                        value={amount}
+                                        onChange={(e) => setAmount(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Duration (Minutes)*</label>
+                                    <input
+                                        type="number"
+                                        value={duration}
+                                        onChange={(e) => setDuration(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                <div className={styles["modal-row"]}>
+                                    <label>Duty Cycle*</label>
+                                    <input
+                                        type="number"
+                                        value={dutyCycle}
+                                        onChange={(e) => setDutyCycle(parseInt(e.target.value))}
+                                    />
                                 </div>
                                 <div className={styles["modal-subtotal"]}>
-                                    <strong>Subtotal:</strong> {subtotal}
+                                    <b>Subtotal: {subtotal.toFixed(2)}</b>
                                 </div>
-                                <button
-                                    className={styles["confirm-button"]}
-                                    onClick={handleConfirmAdd}
-                                >
-                                    Confirm Add
-                                </button>
+                                <div className={styles["modal-actions"]}>
+                                    <button
+                                        className={styles["cancel-button"]}
+                                        onClick={() => setShowModal(false)}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        className={styles["confirm-button"]}
+                                        onClick={handleConfirmAdd}
+                                    >
+                                        Add to Cart
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
             </main>
         </div>
     );
